@@ -154,6 +154,17 @@
                 </div>
             </div>
 
+            <!-- STOP DYNAMIC MICRO-EXPENSES REPORT CARD (NEW!) -->
+            <div id="stopExpensesReportCard" class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 space-y-3 hidden">
+                <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>📋 รายงานค่าย่อยแยกตามจุดแวะ</span>
+                    <span id="stopExpensesReportTotal" class="text-xs text-slate-300 font-mono">รวม: ฿0</span>
+                </h4>
+                <div id="stopExpensesReportList" class="space-y-3 max-h-[250px] overflow-y-auto pr-1 no-scrollbar text-xs">
+                    <!-- Dynamic stop-grouped items mapped via JS -->
+                </div>
+            </div>
+
             <!-- Expense Items Editable List -->
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
@@ -254,10 +265,10 @@
 
             <!-- Toggle Layout View (Grid Map vs List) -->
             <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 items-center justify-between gap-1">
-                <button onclick="setMapLayout('grid')" id="btnLayoutGrid" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-250">
+                <button onclick="setMapLayout('grid')" id="btnLayoutGrid" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-200">
                     🗺️ แผนที่ตาราง
                 </button>
-                <button onclick="setMapLayout('list')" id="btnLayoutList" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-250">
+                <button onclick="setMapLayout('list')" id="btnLayoutList" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200">
                     📋 ตารางรายชื่อ
                 </button>
             </div>
@@ -661,13 +672,13 @@
                 provinces: "กำแพงเพชร - สุโขทัย - พิษณุโลก - พิจิตร",
                 provincesList: ["กำแพงเพชร", "สุโขทัย", "พิษณุโลก", "พิจิตร", "กรุงเทพ"],
                 stops: [
-                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true },
-                    { id: 2, prov: "กำแพงเพชร", place: "น้ำตกคลองลาน (ปิกนิกกินข้าวเช้า)", km: 351, dur: "04:43", est_arr: "08:43", est_dep: "08:58", actual_arr: null, checkIn: false },
-                    { id: 3, prov: "กำแพงเพชร", place: "พิพิธภัณฑสถานแห่งชาติกำแพงเพชร", km: 60, dur: "01:00", est_arr: "09:58", est_dep: "10:58", actual_arr: null, checkIn: false },
-                    { id: 4, prov: "สุโขทัย", place: "สตรีทอาร์ต สวรรคโลก (เดินถ่ายรูปเก๋ๆ)", km: 90, dur: "01:25", est_arr: "12:12", est_dep: "12:57", actual_arr: null, checkIn: false },
-                    { id: 5, prov: "พิษณุโลก", place: "วัดพระศรีรัตนมหาธาตุวรมหาวิหาร (ไหว้ย่าโมทอง)", km: 90, dur: "01:30", est_arr: "14:27", est_dep: "14:42", actual_arr: null, checkIn: false },
-                    { id: 6, prov: "พิษณุโลก", place: "ก๋วยเตี๋ยวห้อยขาริมน่าน จ.พิษณุโลก (บ่ายแก่ๆ)", km: 0.5, dur: "00:01", est_arr: "14:43", est_dep: "15:13", actual_arr: null, checkIn: false },
-                    { id: 7, prov: "พิจิตร", place: "สถานีรถไฟพิจิตร (แลนด์มาร์คโบราณ)", km: 60, dur: "01:00", est_arr: "16:13", est_dep: "16:53", actual_arr: null, checkIn: false }
+                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true, expenses: [] },
+                    { id: 2, prov: "กำแพงเพชร", place: "น้ำตกคลองลาน (ปิกนิกกินข้าวเช้า)", km: 351, dur: "04:43", est_arr: "08:43", est_dep: "08:58", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 3, prov: "กำแพงเพชร", place: "พิพิธภัณฑสถานแห่งชาติกำแพงเพชร", km: 60, dur: "01:00", est_arr: "09:58", est_dep: "10:58", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 4, prov: "สุโขทัย", place: "สตรีทอาร์ต สวรรคโลก (เดินถ่ายรูปเก๋ๆ)", km: 90, dur: "01:25", est_arr: "12:12", est_dep: "12:57", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 5, prov: "พิษณุโลก", place: "วัดพระศรีรัตนมหาธาตุวรมหาวิหาร (ไหว้ย่าโมทอง)", km: 90, dur: "01:30", est_arr: "14:27", est_dep: "14:42", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 6, prov: "พิษณุโลก", place: "ก๋วยเตี๋ยวห้อยขาริมน่าน จ.พิษณุโลก (บ่ายแก่ๆ)", km: 0.5, dur: "00:01", est_arr: "14:43", est_dep: "15:13", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 7, prov: "พิจิตร", place: "สถานีรถไฟพิจิตร (แลนด์มาร์คโบราณ)", km: 60, dur: "01:00", est_arr: "16:13", est_dep: "16:53", actual_arr: null, checkIn: false, expenses: [] }
                 ],
                 expenses: [
                     { category: "gas", label: "⛽ ค่าน้ำมันเชื้อเพลิง (@35)", estimate: 4928, actual: 0 },
@@ -681,12 +692,12 @@
                 provinces: "กรุงเทพ - ตราด - จันทบุรี",
                 provincesList: ["กรุงเทพ", "ตราด", "จันทบุรี"],
                 stops: [
-                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true },
-                    { id: 2, prov: "ตราด", place: "ส่วนที่แคบที่สุดในประเทศไทย", km: 391, dur: "05:19", est_arr: "09:19", est_dep: "09:34", actual_arr: null, checkIn: false },
-                    { id: 3, prov: "ตราด", place: "ศาลกรมหลวงชุมพร​ เขตอุดมศักดิ์ คลองขาม", km: 10, dur: "00:15", est_arr: "09:49", est_dep: "10:04", actual_arr: null, checkIn: false },
-                    { id: 4, prov: "ตราด", place: "ก๋วยเตี๋ยวห้อยขาริมคลองไม้รูด (ร้านเด็ด)", km: 33, dur: "00:32", est_arr: "10:36", est_dep: "11:06", actual_arr: null, checkIn: false },
-                    { id: 5, prov: "ตราด", place: "น้ำตกสะพานหิน (เล่นน้ำตก)", km: 28.4, dur: "00:23", est_arr: "11:29", est_dep: "12:29", actual_arr: null, checkIn: false },
-                    { id: 6, prov: "จันทบุรี", place: "ซีวิว รีสอร์ท จันทบุรี (เช็กอินที่พัก)", km: 75, dur: "01:11", est_arr: "17:35", est_dep: "---", actual_arr: null, checkIn: false }
+                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true, expenses: [] },
+                    { id: 2, prov: "ตราด", place: "ส่วนที่แคบที่สุดในประเทศไทย", km: 391, dur: "05:19", est_arr: "09:19", est_dep: "09:34", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 3, prov: "ตราด", place: "ศาลกรมหลวงชุมพร​ เขตอุดมศักดิ์ คลองขาม", km: 10, dur: "00:15", est_arr: "09:49", est_dep: "10:04", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 4, prov: "ตราด", place: "ก๋วยเตี๋ยวห้อยขาริมคลองไม้รูด (ร้านเด็ด)", km: 33, dur: "00:32", est_arr: "10:36", est_dep: "11:06", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 5, prov: "ตราด", place: "น้ำตกสะพานหิน (เล่นน้ำตก)", km: 28.4, dur: "00:23", est_arr: "11:29", est_dep: "12:29", actual_arr: null, checkIn: false, expenses: [] },
+                    { id: 6, prov: "จันทบุรี", place: "ซีวิว รีสอร์ท จันทบุรี (เช็กอินที่พัก)", km: 75, dur: "01:11", est_arr: "17:35", est_dep: "---", actual_arr: null, checkIn: false, expenses: [] }
                 ],
                 expenses: [
                     { category: "gas", label: "⛽ ค่าน้ำมันเชื้อเพลิง (@35)", estimate: 2681, actual: 0 },
@@ -949,8 +960,20 @@
             let totalActual = 0;
             let checkedInCount = 0;
 
+            // Reset and calculate stop-grouped expenses
+            const stopExpensesByCategory = {};
+
             activeTripData.stops.forEach(stop => {
                 if (stop.checkIn) checkedInCount++;
+                
+                // CRUCIAL: Sum up stop-specific micro-transaction expenses to totalActual
+                if (stop.expenses) {
+                    stop.expenses.forEach(se => {
+                        const cat = se.category || 'ticket'; // fallback to ticket
+                        stopExpensesByCategory[cat] = (stopExpensesByCategory[cat] || 0) + (Number(se.amount) || 0);
+                        totalActual += Number(se.amount) || 0;
+                    });
+                }
             });
 
             // Fallback empty array
@@ -958,6 +981,7 @@
 
             activeTripData.expenses.forEach(exp => {
                 totalEstimate += Number(exp.estimate) || 0;
+                // Add direct manual actual spent
                 totalActual += Number(exp.actual) || 0;
             });
 
@@ -1000,6 +1024,9 @@
             document.getElementById("provincesProgressBar").style.width = `${mapProgressPct}%`;
 
             updateDeleteButtonVisibility();
+            
+            // Re-render Stop Expenses report with correct category grouping
+            renderStopExpensesReport();
         }
 
         function renderApp() {
@@ -1010,6 +1037,21 @@
 
             const timelineContainer = document.getElementById("timelineList");
             timelineContainer.innerHTML = "";
+
+            // Prepare categories helper mapping for icon display
+            const catIcons = {
+                gas: "⛽",
+                food: "🍛",
+                hotel: "🏡",
+                ticket: "🎟️"
+            };
+
+            const catLabels = {
+                gas: "ค่าน้ำมัน",
+                food: "ค่าอาหาร",
+                hotel: "ค่าที่พัก",
+                ticket: "ค่าเข้า/อื่นๆ"
+            };
 
             activeTripData.stops.forEach((stop, index) => {
                 const isChecked = stop.checkIn;
@@ -1026,6 +1068,52 @@
                 const estDepEsc = escapeHtml(stop.est_dep);
                 const durEsc = escapeHtml(stop.dur);
                 const actualArrEsc = escapeHtml(stop.actual_arr);
+
+                // Build stop-specific custom sub-expenses listing
+                let stopExpensesHtml = "";
+                if (stop.expenses && stop.expenses.length > 0) {
+                    stopExpensesHtml += `<div class="mt-2.5 pt-2 border-t border-slate-700/40 text-[11px] space-y-1">`;
+                    stopExpensesHtml += `<p class="font-bold text-amber-400 flex justify-between"><span>💸 รายการจ่ายจริงที่จุดนี้:</span> <span class="text-slate-300 font-semibold font-mono">฿${stop.expenses.reduce((sum, se) => sum + se.amount, 0).toLocaleString()}</span></p>`;
+                    stop.expenses.forEach((se) => {
+                        const icon = catIcons[se.category] || "💸";
+                        const label = catLabels[se.category] || "ทั่วไป";
+                        stopExpensesHtml += `
+                            <div class="flex justify-between items-center bg-slate-900/50 px-2 py-1 rounded border border-slate-700/10">
+                                <span class="truncate pr-1">${icon} <span class="text-slate-400 font-semibold">[${label}]</span> ${escapeHtml(se.label)}</span>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-white font-mono">฿${se.amount.toLocaleString()}</span>
+                                    <button onclick="deleteStopExpense(${stop.id}, ${se.id})" class="text-rose-400 hover:text-rose-300 font-bold px-0.5" title="ลบรายการนี้">✕</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    stopExpensesHtml += `</div>`;
+                }
+
+                // Add "Quick Add Stop Expense Form" inside card with Predefined 4 BG Selection List
+                let quickAddStopExpenseFormHtml = `
+                    <div class="mt-2.5 pt-2.5 border-t border-slate-700/30 space-y-2">
+                        <span class="text-[10.5px] font-bold text-slate-400 block">💸 บันทึกค่าใช้จ่ายด่วนที่จุดนี้:</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <select id="quickExCategory_${stop.id}" class="bg-slate-950 text-slate-100 text-[11.5px] rounded-lg px-2 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500">
+                                <option value="food">🍛 ค่าอาหาร/เครื่องดื่ม</option>
+                                <option value="gas">⛽ ค่าน้ำมัน</option>
+                                <option value="hotel">🏡 ค่าที่พัก</option>
+                                <option value="ticket">🎟️ ค่าเข้าสถานที่/อื่นๆ</option>
+                            </select>
+                            <input type="text" id="quickExLabel_${stop.id}" placeholder="รายละเอียด (เช่น ค่าข้าว, กาแฟ)" class="bg-slate-950 text-slate-100 text-[11.5px] rounded-lg px-2.5 py-1.5 border border-slate-700 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <div class="relative flex-1">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-[11.5px] font-semibold text-slate-500">฿</span>
+                                <input type="number" id="quickExAmount_${stop.id}" placeholder="จำนวนเงิน" class="w-full bg-slate-950 text-slate-100 text-[11.5px] rounded-lg py-1.5 pl-6 pr-2 border border-slate-700 focus:outline-none focus:border-amber-500 text-right">
+                            </div>
+                            <button onclick="addStopExpense(${stop.id})" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs py-1.5 px-4 rounded-lg shadow transition-all shrink-0 flex items-center gap-1">
+                                <span>➕</span> บันทึก
+                            </button>
+                        </div>
+                    </div>
+                `;
 
                 // Add stops item card
                 let timelineCardHtml = `
@@ -1064,6 +1152,12 @@
                                     🗺️ นำทาง
                                 </a>
                             </div>
+
+                            <!-- Stop-level Expenses Sub-listing -->
+                            ${stopExpensesHtml}
+
+                            <!-- Stop-level Quick Add Expense Form -->
+                            ${quickAddStopExpenseFormHtml}
                         </div>
                     </div>
                 `;
@@ -1093,40 +1187,62 @@
                 timelineContainer.appendChild(stopEl);
             });
 
-            // Update Expenses list
+            // Update Expenses list on summary tab
             const expensesContainer = document.getElementById("expenseFieldsList");
             expensesContainer.innerHTML = "";
 
             if (!activeTripData.expenses) activeTripData.expenses = [];
 
+            // Group stop-level micro-expenses by category for summary tab rollup calculations
+            const stopExpensesByCategory = {};
+            activeTripData.stops.forEach(stop => {
+                if (stop.expenses) {
+                    stop.expenses.forEach(se => {
+                        const cat = se.category || 'ticket';
+                        stopExpensesByCategory[cat] = (stopExpensesByCategory[cat] || 0) + (Number(se.amount) || 0);
+                    });
+                }
+            });
+
             activeTripData.expenses.forEach((exp, idx) => {
                 const itemEl = document.createElement("div");
-                itemEl.className = "bg-slate-800 p-3.5 rounded-xl border border-slate-700 flex items-center justify-between gap-4";
+                itemEl.className = "bg-slate-800 p-3.5 rounded-xl border border-slate-700 flex flex-col gap-2";
                 
-                // Safe Variable HTML Escaping to block DOM-XSS vectors cleanly
                 const labelEsc = escapeHtml(exp.label);
+                const catKey = exp.category || 'ticket';
+                const stopSum = stopExpensesByCategory[catKey] || 0;
+                const totalCategoryActual = (Number(exp.actual) || 0) + stopSum;
 
                 itemEl.innerHTML = `
-                    <div class="flex-1 min-w-0 flex items-center gap-2.5">
-                        <button onclick="deleteExpenseItem(${idx})" class="text-slate-500 hover:text-rose-500 p-1 text-sm transition-colors" title="ลบหมวดหมู่นี้">
-                            🗑️
-                        </button>
-                        <div class="flex-1 min-w-0">
-                            <span class="text-xs font-semibold text-slate-200 block truncate">${labelEsc}</span>
-                            <span class="text-[10px] text-slate-400 font-medium">งบวางแผน: ฿${exp.estimate.toLocaleString()}</span>
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex-1 min-w-0 flex items-center gap-2.5">
+                            <button onclick="deleteExpenseItem(${idx})" class="text-slate-500 hover:text-rose-500 p-1 text-sm transition-colors" title="ลบหมวดหมู่นี้">
+                                🗑️
+                            </button>
+                            <div class="flex-1 min-w-0">
+                                <span class="text-xs font-semibold text-slate-200 block truncate">${labelEsc}</span>
+                                <span class="text-[10px] text-slate-400 font-medium">งบวางแผน: ฿${exp.estimate.toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-xs text-slate-400 shrink-0">กรอกตรง:</span>
+                            <div class="relative w-28">
+                                <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">฿</span>
+                                <input type="number" 
+                                       value="${exp.actual || ''}" 
+                                       placeholder="0" 
+                                       oninput="updateExpenseActual(${idx}, this.value)" 
+                                       class="w-full bg-slate-950 text-slate-100 text-xs font-semibold text-right rounded-lg border border-slate-700 py-1.5 pl-6 pr-2.5 focus:outline-none focus:border-amber-500">
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="text-xs text-slate-400 shrink-0">จ่ายจริง:</span>
-                        <div class="relative w-28">
-                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">฿</span>
-                            <input type="number" 
-                                   value="${exp.actual || ''}" 
-                                   placeholder="0" 
-                                   oninput="updateExpenseActual(${idx}, this.value)" 
-                                   class="w-full bg-slate-950 text-slate-100 text-xs font-semibold text-right rounded-lg border border-slate-700 py-1.5 pl-6 pr-2.5 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                        </div>
+                    <!-- If there are stop-level expenses of this category, show a sub-total breakdown (NEW!) -->
+                    ${stopSum > 0 ? `
+                    <div class="flex justify-between items-center text-[11px] text-slate-400 pl-8 border-l-2 border-amber-500/20">
+                        <span>➕ จากจุดแวะสะสม: ฿${stopSum.toLocaleString()}</span>
+                        <span class="text-amber-400 font-bold">รวมจ่ายจริงหมวดนี้: ฿${totalCategoryActual.toLocaleString()}</span>
                     </div>
+                    ` : ''}
                 `;
                 expensesContainer.appendChild(itemEl);
             });
@@ -1135,72 +1251,167 @@
             const provinceChecklist = document.getElementById("tripProvincesChecklist");
             provinceChecklist.innerHTML = "";
 
-            if (provinceMapLayout === 'grid') {
-                // Style container as a Cartogram grid of Thailand
-                provinceChecklist.className = "grid grid-cols-10 gap-1 p-2 bg-slate-950/60 rounded-2xl border border-slate-800/80 overflow-x-auto min-w-[320px]";
-                
-                Object.keys(provinceTileConfig).forEach(prov => {
-                    const config = provinceTileConfig[prov];
-                    const isVisited = globalVisitedProvinces.includes(prov);
-                    
-                    // Filter check: If "Trip Only" is active, dim non-active provinces instead of hiding them
-                    const isInActiveTrip = provinceFilter === 'all' || (activeTripData.provincesList && activeTripData.provincesList.includes(prov));
-
-                    const tileBtn = document.createElement("button");
-                    tileBtn.onclick = () => toggleProvinceConquered(prov);
-                    tileBtn.style.gridRow = config.r;
-                    tileBtn.style.gridColumn = config.c;
-                    
-                    // Style states
-                    let bgClass = "bg-slate-800/30 text-slate-500 border-slate-800";
-                    if (isVisited) {
-                        bgClass = "bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-md shadow-amber-500/10";
-                    }
-                    
-                    // Opacity control depending on trip filter
-                    let opacityClass = "opacity-100";
-                    if (!isInActiveTrip) {
-                        opacityClass = "opacity-20 pointer-events-none"; // faded out and disabled
-                    }
-
-                    // Safe Escape HTML parameters
-                    const abbrEsc = escapeHtml(config.abbr);
-                    const provNameEsc = escapeHtml(prov);
-
-                    tileBtn.className = `flex flex-col items-center justify-center aspect-square rounded-lg border text-[8px] transition-all p-0.5 ${bgClass} ${opacityClass} hover:scale-105 active:scale-95`;
-                    tileBtn.innerHTML = `
-                        <span class="text-[10px] uppercase tracking-tighter leading-none font-bold">${abbrEsc}</span>
-                        <span class="text-[5.5px] opacity-75 leading-none mt-0.5 truncate max-w-full">${provNameEsc}</span>
-                    `;
-                    provinceChecklist.appendChild(tileBtn);
-                });
+            let displayProvinces = [];
+            if (provinceFilter === 'trip') {
+                displayProvinces = activeTripData.provincesList || [];
             } else {
-                // Render original list layout
-                provinceChecklist.className = "grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 no-scrollbar";
+                const searchVal = document.getElementById("provinceSearchInput").value.trim().toLowerCase();
+                displayProvinces = allProvincesList.filter(prov => prov.toLowerCase().includes(searchVal));
+            }
+
+            displayProvinces.forEach(prov => {
+                const isVisited = globalVisitedProvinces.includes(prov);
+                const blockEl = document.createElement("button");
+                blockEl.onclick = () => toggleProvinceConquered(prov);
+                blockEl.className = `p-3 rounded-xl border text-xs font-semibold flex items-center justify-between text-left transition-all ${isVisited ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700/60'}`;
                 
-                let displayProvinces = [];
-                if (provinceFilter === 'trip') {
-                    displayProvinces = activeTripData.provincesList || [];
-                } else {
-                    const searchVal = document.getElementById("provinceSearchInput").value.trim().toLowerCase();
-                    displayProvinces = allProvincesList.filter(prov => prov.toLowerCase().includes(searchVal));
-                }
+                blockEl.innerHTML = `
+                    <span>📍 ${escapeHtml(prov)}</span>
+                    <span class="text-[10px]">${isVisited ? '🎉 พิชิตแล้ว' : 'ยังไม่ผ่าน'}</span>
+                `;
+                provinceChecklist.appendChild(blockEl);
+            });
+        }
 
-                displayProvinces.forEach(prov => {
-                    const isVisited = globalVisitedProvinces.includes(prov);
-                    const blockEl = document.createElement("button");
-                    blockEl.onclick = () => toggleProvinceConquered(prov);
-                    blockEl.className = `p-3 rounded-xl border text-xs font-semibold flex items-center justify-between text-left transition-all ${isVisited ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700/60'}`;
-                    
-                    const provNameEsc = escapeHtml(prov);
-                    const statusText = isVisited ? '🎉 พิชิตแล้ว' : 'ยังไม่ผ่าน';
+        // -------------------------------------------------------------
+        // NEW FEATURE: STOP-SPECIFIC EXPENDITURE ADD/DELETE LOGIC (NEW!)
+        // -------------------------------------------------------------
+        function addStopExpense(stopId) {
+            const catSelect = document.getElementById(`quickExCategory_${stopId}`);
+            const labelInput = document.getElementById(`quickExLabel_${stopId}`);
+            const amountInput = document.getElementById(`quickExAmount_${stopId}`);
 
-                    blockEl.innerHTML = `
-                        <span>📍 ${provNameEsc}</span>
-                        <span class="text-[10px]">${statusText}</span>
-                    `;
-                    provinceChecklist.appendChild(blockEl);
+            if (!catSelect || !labelInput || !amountInput) return;
+
+            const category = catSelect.value;
+            let label = labelInput.value.trim();
+            const amount = Number(amountInput.value) || 0;
+
+            const catLabels = {
+                gas: "ค่าน้ำมัน",
+                food: "ค่าอาหาร/เครื่องดื่ม",
+                hotel: "ค่าที่พัก",
+                ticket: "ค่าเข้าสถานที่/อื่นๆ"
+            };
+
+            if (!label) {
+                // Default fallback to category name if label is omitted
+                label = catLabels[category] || "ค่าใช้จ่ายทั่วไป";
+            }
+            if (amount <= 0) {
+                showToast("⚠️ กรุณาระบุจำนวนเงินจริงที่ถูกต้อง!");
+                return;
+            }
+
+            const stop = activeTripData.stops.find(s => s.id === stopId);
+            if (stop) {
+                if (!stop.expenses) stop.expenses = [];
+                stop.expenses.push({
+                    id: Date.now(),
+                    category: category,
+                    label: label,
+                    amount: amount
                 });
+
+                // Clear input boxes
+                labelInput.value = "";
+                amountInput.value = "";
+
+                saveState();
+                renderApp();
+                calculateTotals();
+                showToast(`💸 บันทึกจ่ายจริง [${catLabels[category]}] "${escapeHtml(label)}" ฿${amount.toLocaleString()} สำเร็จ!`);
+            }
+        }
+
+        function deleteStopExpense(stopId, expenseId) {
+            const stop = activeTripData.stops.find(s => s.id === stopId);
+            if (stop && stop.expenses) {
+                const index = stop.expenses.findIndex(se => se.id === expenseId);
+                if (index > -1) {
+                    const removedLabel = stop.expenses[index].label;
+                    stop.expenses.splice(index, 1);
+                    saveState();
+                    renderApp();
+                    calculateTotals();
+                    showToast(`🗑️ ลบรายการ "${escapeHtml(removedLabel)}" แล้ว`);
+                }
+            }
+        }
+
+        // Aggregate and paint grouped Stop-specific Expense Report on the "Summary/สรุปเงิน" tab
+        function renderStopExpensesReport() {
+            const reportCard = document.getElementById("stopExpensesReportCard");
+            const reportList = document.getElementById("stopExpensesReportList");
+            const reportTotalLabel = document.getElementById("stopExpensesReportTotal");
+
+            if (!reportCard || !reportList || !reportTotalLabel) return;
+
+            reportList.innerHTML = "";
+            let grandTotal = 0;
+            let hasExpenses = false;
+
+            const catIcons = {
+                gas: "⛽",
+                food: "🍛",
+                hotel: "🏡",
+                ticket: "🎟️"
+            };
+
+            const catLabels = {
+                gas: "ค่าน้ำมัน",
+                food: "ค่าอาหาร",
+                hotel: "ค่าที่พัก",
+                ticket: "ค่าเข้า/อื่นๆ"
+            };
+
+            activeTripData.stops.forEach(stop => {
+                if (stop.expenses && stop.expenses.length > 0) {
+                    hasExpenses = true;
+                    let stopSubtotal = 0;
+
+                    const stopBlock = document.createElement("div");
+                    stopBlock.className = "bg-slate-900/40 p-2.5 rounded-lg border border-slate-700/40 space-y-1.5";
+
+                    let itemsHtml = `<div class="font-bold text-slate-200 flex justify-between items-center pb-1 border-b border-slate-700/20">
+                        <span class="truncate">📍 ${escapeHtml(stop.place)}</span>
+                        <span class="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded-md">${escapeHtml(stop.prov)}</span>
+                    </div>`;
+                    
+                    itemsHtml += `<div class="space-y-1 pl-2 border-l-2 border-amber-500/20 mt-1">`;
+                    stop.expenses.forEach(se => {
+                        stopSubtotal += se.amount;
+                        const icon = catIcons[se.category] || "💸";
+                        const label = catLabels[se.category] || "ทั่วไป";
+                        itemsHtml += `
+                            <div class="flex justify-between items-center text-[11px] text-slate-300">
+                                <span class="truncate pr-1">${icon} <span class="text-slate-400 font-semibold">[${label}]</span> ${escapeHtml(se.label)}</span>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="font-mono text-white font-bold">฿${se.amount.toLocaleString()}</span>
+                                    <button onclick="deleteStopExpense(${stop.id}, ${se.id})" class="text-rose-400 hover:text-rose-300 font-bold" title="ลบ">✕</button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    itemsHtml += `</div>`;
+
+                    itemsHtml += `
+                        <div class="text-right text-[10px] font-extrabold text-amber-400 pt-1 border-t border-slate-700/10 mt-1">
+                            รวมจ่ายจุดนี้: ฿${stopSubtotal.toLocaleString()}
+                        </div>
+                    `;
+
+                    grandTotal += stopSubtotal;
+                    stopBlock.innerHTML = itemsHtml;
+                    reportList.appendChild(stopBlock);
+                }
+            });
+
+            if (hasExpenses) {
+                reportCard.classList.remove("hidden");
+                reportTotalLabel.innerText = `รวมย่อยรายจุด: ฿${grandTotal.toLocaleString()}`;
+            } else {
+                reportCard.classList.add("hidden");
             }
         }
 
@@ -1316,7 +1527,8 @@
                 est_arr: "---",
                 est_dep: dep || "---",
                 actual_arr: null,
-                checkIn: false
+                checkIn: false,
+                expenses: []
             };
 
             // Splice into array structure
@@ -1451,7 +1663,6 @@
             // 1. Geocode with Photon API (with sequential rate limit delay compliant wrapper)
             for (let i = 0; i < placesList.length; i++) {
                 const item = placesList[i];
-                // Delay 300ms starting from second item to protect Photon rate limit bounds
                 const coords = await geocodeWithDelay(item.place, item.prov, i === 0 ? 0 : 300);
                 if (coords) {
                     coordinates.push(coords);
@@ -1519,7 +1730,7 @@
             showToast("✨ อัปเดตตารางเวลา และระยะทาง OSRM สำเร็จ!");
         }
 
-        // Active Google Maps Route Runner with CORS Try-Catch fallback advising warning modal
+        // Active Google Maps Route Runner
         async function calculateActiveWithGoogleMaps(placesList, apiKey) {
             const originList = placesList.map(item => `${item.place}, ${item.prov}, Thailand`);
             
@@ -1535,7 +1746,6 @@
                     
                     const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${apiKey}`;
                     
-                    // Directly calling GMaps matrix from Browser will usually trigger CORS-block unless a browser proxy bypass is active
                     const res = await fetch(url);
                     const data = await res.json();
 
@@ -1579,7 +1789,7 @@
                             activeTripData.stops[i].est_dep = formatTime(currentHour, currentMinute, daysOffset);
                         }
                     } else {
-                        throw new Error("Google Maps matrix calculation error");
+                        throw new Error("Google Maps matrix error");
                     }
                 }
                 showToast("👑 อัปเดตตารางเวลา Google Maps Premium สำเร็จ!");
@@ -1589,63 +1799,6 @@
             }
         }
 
-        function triggerCheckIn(stopId) {
-            const stop = activeTripData.stops.find(s => s.id === stopId);
-            if (!stop) return;
-
-            if (!stop.checkIn) {
-                const now = new Date();
-                const hh = String(now.getHours()).padStart(2, '0');
-                const mm = String(now.getMinutes()).padStart(2, '0');
-                stop.actual_arr = `${hh}:${mm}`;
-                stop.checkIn = true;
-                
-                if (!globalVisitedProvinces.includes(stop.prov)) {
-                    globalVisitedProvinces.push(stop.prov);
-                }
-                showToast(`เช็กอินแล้ว! ⏱️ บันทึกเวลาถึงคือ ${stop.actual_arr} น.`);
-            } else {
-                stop.checkIn = false;
-                stop.actual_arr = null;
-                
-                // Smart clean-up province list: remove from global map only if no other checked-in stops are in that province
-                const otherCheckedStopsInProv = activeTripData.stops.some(s => s.prov === stop.prov && s.checkIn && s.id !== stop.id);
-                if (!otherCheckedStopsInProv) {
-                    const pIdx = globalVisitedProvinces.indexOf(stop.prov);
-                    if (pIdx > -1) {
-                        globalVisitedProvinces.splice(pIdx, 1);
-                    }
-                }
-                showToast("ยกเลิกการเช็กอินแล้ว");
-            }
-
-            saveState();
-            renderApp();
-            calculateTotals();
-        }
-
-        function updateExpenseActual(index, val) {
-            if (!activeTripData.expenses) activeTripData.expenses = [];
-            activeTripData.expenses[index].actual = Number(val) || 0;
-            saveState();
-            calculateTotals();
-        }
-
-        function toggleProvinceConquered(prov) {
-            const idx = globalVisitedProvinces.indexOf(prov);
-            if (idx > -1) {
-                globalVisitedProvinces.splice(idx, 1);
-                showToast(`เอา ${escapeHtml(prov)} ออกจากทำเนียบแล้ว`);
-            } else {
-                globalVisitedProvinces.push(prov);
-                showToast(`🎉 ยินดีด้วย! คุณพิชิตจังหวัด ${escapeHtml(prov)} แล้ว!`);
-            }
-            saveState();
-            renderApp();
-            calculateTotals();
-        }
-
-        // --- RESTORED & UPGRADED TAB SWITCHING FUNCTION ---
         function switchTab(tabId) {
             // Hide all tab screens
             document.getElementById("tabTimeline").classList.add("hidden");
@@ -1666,6 +1819,7 @@
             } else if (tabId === "expenses") {
                 document.getElementById("tabExpenses").classList.remove("hidden");
                 document.getElementById("navExpenses").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
+                renderStopExpensesReport(); // Refresh stop-by-stop report on enter
             } else if (tabId === "summary") {
                 document.getElementById("tabSummary").classList.remove("hidden");
                 document.getElementById("navSummary").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
@@ -1677,7 +1831,7 @@
         }
 
         // -------------------------------------------------------------
-        // NEW FEATURE: ALL TRIPS SUMMARY TAB RENDERING LOGIC
+        // ALL TRIPS SUMMARY TAB RENDERING LOGIC
         // -------------------------------------------------------------
         function renderSummaryTab() {
             loadTripsDatabase(); // Refresh registry
@@ -1711,6 +1865,16 @@
 
                 let estimate = 0;
                 let actual = 0;
+
+                // Dynamic aggregation of stop micro-expenses in other trips
+                trip.stops.forEach(stop => {
+                    if (stop.expenses) {
+                        stop.expenses.forEach(se => {
+                            actual += Number(se.amount) || 0;
+                        });
+                    }
+                });
+
                 if (trip.expenses) {
                     trip.expenses.forEach(e => {
                         estimate += Number(e.estimate) || 0;
@@ -1867,8 +2031,15 @@
 
             if (!activeTripData.expenses) activeTripData.expenses = [];
 
+            // Guess category from label for the newly added main expense line
+            let cat = "ticket";
+            const labelLower = label.toLowerCase();
+            if (labelLower.includes("น้ำมัน") || labelLower.includes("gas") || labelLower.includes("⛽")) cat = "gas";
+            else if (labelLower.includes("อาหาร") || labelLower.includes("กิน") || labelLower.includes("ข้าว") || labelLower.includes("🍛") || labelLower.includes("กาแฟ")) cat = "food";
+            else if (labelLower.includes("พัก") || labelLower.includes("โรงแรม") || labelLower.includes("ห้อง") || labelLower.includes("🏡")) cat = "hotel";
+
             activeTripData.expenses.push({
-                category: "custom",
+                category: cat,
                 label: label,
                 estimate: est,
                 actual: 0
@@ -1940,7 +2111,6 @@
             }
         }
 
-        // Engine 1: OSRM using Photon Geocoder with compliance rate limits delays
         async function calculateWithOSRM(placesList, stopRows) {
             const coordinates = [];
 
@@ -2065,7 +2235,7 @@
                         const nextDep = formatTime(currentHour, currentMinute, daysOffset);
                         stopRows[i].querySelector(".stop-dep").value = nextDep;
                     } else {
-                        throw new Error("Google Maps matrix error");
+                        throw new Error("Google Maps ไม่พบเส้นทางเชื่อมต่อ");
                     }
                 }
                 showToast("👑 ดึงข้อมูลเส้นทางสำเร็จ! (ผ่าน Google Maps Premium)");
@@ -2241,7 +2411,8 @@
                     est_arr: calcArr,
                     est_dep: depVal,
                     actual_arr: index === 0 ? depVal : null,
-                    checkIn: index === 0 ? true : false
+                    checkIn: index === 0 ? true : false,
+                    expenses: [] // Initial empty stop level expenses
                 });
 
                 if (provVal && provVal !== "เลือกจังหวัด" && provVal !== "ไม่ระบุ" && !provincesFound.includes(provVal)) {
@@ -2255,8 +2426,15 @@
                 const labelVal = row.querySelector(".exp-label").value.trim() || "ค่าใช้จ่ายทั่วไป";
                 const estVal = Number(row.querySelector(".exp-est").value) || 0;
 
+                // Auto detect category for custom budgets during creation
+                let cat = "ticket";
+                const labelLower = labelVal.toLowerCase();
+                if (labelLower.includes("น้ำมัน") || labelLower.includes("gas") || labelLower.includes("⛽")) cat = "gas";
+                else if (labelLower.includes("อาหาร") || labelLower.includes("กิน") || labelLower.includes("ข้าว") || labelLower.includes("🍛") || labelLower.includes("กาแฟ")) cat = "food";
+                else if (labelLower.includes("พัก") || labelLower.includes("โรงแรม") || labelLower.includes("ห้อง") || labelLower.includes("🏡")) cat = "hotel";
+
                 parsedExpenses.push({
-                    category: "custom",
+                    category: cat,
                     label: labelVal,
                     estimate: estVal,
                     actual: 0
