@@ -1,1 +1,2306 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadtrip 77 - Companion App</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt & Sarabun -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Prompt', 'Sarabun', sans-serif;
+        }
+        /* Custom scrollbar hiding but keeping functionality */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col pb-24">
 
+    <!-- App Header -->
+    <header class="bg-slate-800 border-b border-slate-700 sticky top-0 z-50 px-4 py-3 shadow-lg">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="bg-amber-500 p-2 rounded-xl text-slate-950 font-bold shadow-md shadow-amber-500/20">
+                    🚗💨
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-amber-400 leading-tight">ROADTRIP 77</h1>
+                    <p class="text-[10px] text-slate-400">แอปปรับแผนเส้นทางเรียบลื่น</p>
+                </div>
+            </div>
+            <!-- Quick Trip Selector & Add button -->
+            <div class="flex items-center space-x-1.5">
+                <select id="routeSelector" onchange="switchRoute(this.value)" class="bg-slate-950 text-slate-100 text-xs rounded-lg border border-slate-600 px-2 py-1.5 max-w-[130px] focus:outline-none focus:border-amber-500">
+                    <!-- Loaded dynamically via JS -->
+                </select>
+                <button onclick="openCreateTripModal()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 p-1.5 rounded-lg font-bold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-1" title="สร้างทริปใหม่">
+                    <span>➕</span>
+                </button>
+                <button onclick="openSettingsModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 p-1.5 rounded-lg font-bold text-xs flex items-center justify-center" title="ตั้งค่า API Key">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-1 w-full max-w-md mx-auto px-4 py-4 space-y-6">
+
+        <!-- Trip Card Overview -->
+        <div id="tripOverview" class="bg-gradient-to-br from-slate-800 to-slate-800/80 p-5 rounded-2xl border border-slate-700/60 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl"></div>
+            <div class="relative z-10">
+                <div class="flex justify-between items-start">
+                    <span class="bg-amber-500/20 text-amber-300 text-[10px] font-semibold px-2 py-1 rounded-full uppercase tracking-wider">ทริปที่กำลังเดินทาง</span>
+                    <button id="btnDeleteTrip" onclick="openDeleteConfirmation()" class="text-xs text-rose-400 bg-rose-500/10 px-2 py-1 rounded-lg border border-rose-500/20 hover:bg-rose-500/20 hidden">
+                        🗑️ ลบทริปนี้
+                    </button>
+                </div>
+                <h2 id="routeTitle" class="text-xl font-bold text-white mt-2 mb-1">โหลดข้อมูล...</h2>
+                <p id="routeProvinces" class="text-xs text-slate-300 flex items-center gap-1">
+                    📍 โหลดข้อมูล...
+                </p>
+
+                <!-- Status Counters -->
+                <div class="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-700/50">
+                    <div class="bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/30 text-center">
+                        <span class="text-[10px] text-slate-400 block">ระยะทางรวม</span>
+                        <span id="statDistance" class="text-sm font-semibold text-amber-400">0 กม.</span>
+                    </div>
+                    <div class="bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/30 text-center">
+                        <span class="text-[10px] text-slate-400 block">เช็กอินแล้ว</span>
+                        <span id="statCheckIn" class="text-sm font-semibold text-emerald-400">0 / 0 จุด</span>
+                    </div>
+                    <div class="bg-slate-900/50 p-2.5 rounded-xl border border-slate-700/30 text-center">
+                        <span class="text-[10px] text-slate-400 block">งบประมาณที่ใช้</span>
+                        <span id="statExpensePercent" class="text-sm font-semibold text-rose-400">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB CONTENT 1: Timeline (แผนการเดินทาง) -->
+        <section id="tabTimeline" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    🧭 แผนเดินทางรายจุด
+                </h3>
+                <span class="text-[11px] text-slate-400">แตะเพื่อเช็กอินและปรับแต่งจุดแวะ</span>
+            </div>
+
+            <!-- Global Recalculate Button directly on Timeline -->
+            <div class="bg-slate-800 p-3 rounded-xl border border-slate-700/60 flex items-center justify-between gap-2 shadow-sm">
+                <div class="text-[11px] text-slate-300">
+                    <p class="font-medium">🧭 มีการแก้ไขจุดแวะระหว่างทาง?</p>
+                    <p class="text-slate-400 text-[10px]">กดอัปเดตเส้นทางเพื่อคํานวณระยะทางและเวลาทริปใหม่</p>
+                </div>
+                <button onclick="recalculateActiveTripOnTheGo()" class="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs py-2 px-3.5 rounded-lg shadow-md transition-all flex items-center gap-1.5 shrink-0">
+                    <span>🤖 อัปเดตเส้นทาง</span>
+                </button>
+            </div>
+
+            <!-- Timeline Flow -->
+            <div id="timelineList" class="relative pl-6 border-l-2 border-dashed border-slate-700 space-y-2">
+                <!-- Dynamic Content Will Be Loaded Here -->
+            </div>
+        </section>
+
+        <!-- TAB CONTENT 2: Expenses & Budget Splitter -->
+        <section id="tabExpenses" class="space-y-4 hidden">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    💸 สรุปงบประมาณ & บันทึกจ่ายจริง
+                </h3>
+                <!-- Splitter Toggle -->
+                <div class="bg-slate-800 p-1 rounded-xl border border-slate-700 flex items-center space-x-1">
+                    <button onclick="setSplitter(1)" id="btnSplit1" class="px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-250 bg-amber-500 text-slate-950">1 คน</button>
+                    <button onclick="setSplitter(2)" id="btnSplit2" class="px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-250 text-slate-400">2 คน</button>
+                    <button onclick="setSplitter(3)" id="btnSplit3" class="px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-250 text-slate-400">3 คน</button>
+                </div>
+            </div>
+
+            <!-- Budget Progress Overview Card -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 space-y-3">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <span class="text-xs text-slate-400">รวมจ่ายจริงทั้งหมด</span>
+                        <div id="totalActualText" class="text-xl font-bold text-white">฿0</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs text-slate-400">แผนงบประมาณ</span>
+                        <div id="totalEstimateText" class="text-sm font-semibold text-slate-300">฿0</div>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="w-full bg-slate-900 rounded-full h-3 overflow-hidden border border-slate-700/50">
+                    <div id="expenseProgressBar" class="bg-gradient-to-r from-emerald-500 to-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span id="splitCostText">ราคาเฉลี่ยต่อคน: ฿0 (หาร 1 คน)</span>
+                    <span id="diffCostText" class="text-emerald-400">คงเหลือจากงบ: ฿0</span>
+                </div>
+            </div>
+
+            <!-- Expense Items Editable List -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">แตะคีย์บอร์ดพิมพ์ราคาจ่ายจริง</h4>
+                    <button onclick="openAddActiveExpenseModal()" class="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 transition-all">
+                        ➕ เพิ่มหมวดงบด่วน
+                    </button>
+                </div>
+                <div id="expenseFieldsList" class="space-y-2">
+                    <!-- Dynamic fields will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT 3: Summary of All Trips -->
+        <section id="tabSummary" class="space-y-4 hidden">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                    📊 สรุปแดชบอร์ดภาพรวมทุกทริป
+                </h3>
+            </div>
+
+            <!-- Cumulative Statistics Grid -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 shadow-sm relative overflow-hidden">
+                    <span class="text-xs text-slate-400 block">🗺️ ทริปทั้งหมด</span>
+                    <span id="allTripsCount" class="text-xl font-extrabold text-amber-400 mt-1 block">0 ทริป</span>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 shadow-sm relative overflow-hidden">
+                    <span class="text-xs text-slate-400 block">🚗 ระยะทางสะสม</span>
+                    <span id="allTripsDistance" class="text-xl font-extrabold text-emerald-400 mt-1 block">0 กม.</span>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 shadow-sm relative overflow-hidden">
+                    <span class="text-xs text-slate-400 block">💰 งบประมาณรวม</span>
+                    <span id="allTripsEstimate" class="text-xl font-extrabold text-blue-400 mt-1 block">฿0</span>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 shadow-sm relative overflow-hidden">
+                    <span class="text-xs text-slate-400 block">💸 จ่ายจริงทั้งหมด</span>
+                    <span id="allTripsActual" class="text-xl font-extrabold text-rose-400 mt-1 block">฿0</span>
+                </div>
+            </div>
+
+            <!-- Cumulative Budget Card -->
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700/60 space-y-3">
+                <div class="flex justify-between items-center text-xs text-slate-400">
+                    <span>ภาพรวมการใช้งบประมาณสะสม</span>
+                    <span id="allTripsSavingText" class="text-emerald-400 font-semibold">คงเหลือ ฿0</span>
+                </div>
+                <div class="w-full bg-slate-950 rounded-full h-3 overflow-hidden border border-slate-700/50">
+                    <div id="allTripsProgressBar" class="bg-gradient-to-r from-emerald-500 to-amber-500 h-full transition-all duration-500" style="width: 0%"></div>
+                </div>
+                <div class="flex justify-between text-[10px] text-slate-400">
+                    <span id="allTripsCheckinProgressText">เช็กอินแล้ว 0 / 0 จุดแวะ</span>
+                    <span id="allTripsUsagePctText">ใช้งบสะสม 0%</span>
+                </div>
+            </div>
+
+            <!-- Individual Trip List cards -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-widest">🗂️ รายการแผนเดินทางทั้งหมดของคุณ</h4>
+                <div id="summaryTripsList" class="space-y-3">
+                    <!-- Dynamic trip cards loaded via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB CONTENT 4: 77 Provinces Conquest Tracker -->
+        <section id="tabMap" class="space-y-4 hidden">
+            <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 flex flex-col items-center text-center space-y-3">
+                <div class="w-16 h-16 bg-gradient-to-tr from-amber-400 to-amber-600 rounded-2xl flex items-center justify-center text-2xl shadow-lg shadow-amber-500/20">
+                    🇹🇭
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-white">ทำเนียบผู้พิชิต 77 จังหวัด</h3>
+                    <p class="text-xs text-slate-400 mt-1">เป้าหมายสูงสุดคือการขับรถขับรถผ่านและปักหมุดครบทุกจังหวัด!</p>
+                </div>
+                <!-- Progress Circular / Metric -->
+                <div class="w-full pt-2">
+                    <div class="flex justify-between items-center text-xs text-slate-300 mb-1">
+                        <span>สถิติทั่วประเทศของคุณ</span>
+                        <span id="provincesCheckedCount" class="font-bold text-amber-400">0 / 77 จังหวัด</span>
+                    </div>
+                    <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden">
+                        <div id="provincesProgressBar" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toggle Filter View -->
+            <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 items-center justify-between gap-1">
+                <button onclick="setProvinceFilter('trip')" id="btnFilterTrip" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-250">
+                    เฉพาะทริปนี้
+                </button>
+                <button onclick="setProvinceFilter('all')" id="btnFilterAll" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-250">
+                    ทั้งหมด 77 จังหวัด
+                </button>
+            </div>
+
+            <!-- Toggle Layout View (Grid Map vs List) -->
+            <div class="flex bg-slate-950 p-1 rounded-xl border border-slate-800 items-center justify-between gap-1">
+                <button onclick="setMapLayout('grid')" id="btnLayoutGrid" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-250">
+                    🗺️ แผนที่ตาราง
+                </button>
+                <button onclick="setMapLayout('list')" id="btnLayoutList" class="flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-250">
+                    📋 ตารางรายชื่อ
+                </button>
+            </div>
+
+            <!-- Province Search Box (Only displayed when 'all' is selected and in 'list' view) -->
+            <div id="provinceSearchContainer" class="hidden">
+                <input id="provinceSearchInput" type="text" oninput="renderApp()" placeholder="🔍 ค้นหาชื่อจังหวัด เช่น เชียงใหม่, ยะลา..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+            </div>
+
+            <!-- Regions Breakdown -->
+            <div class="space-y-3">
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span id="provinceListTitle">รายชื่อจังหวัดในแผนทริปครั้งนี้</span>
+                    <span class="text-amber-400">สีส้ม = ผ่านแล้ว</span>
+                </div>
+                <div id="tripProvincesChecklist" class="grid grid-cols-10 gap-1.5 p-3 bg-slate-950/50 rounded-2xl border border-slate-800 overflow-x-auto min-w-[320px]">
+                    <!-- Dynamic Grid / List contents -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal: CREATE NEW TRIP (แบบฟอร์มสร้างทริปใหม่) -->
+    <div id="createTripModal" class="fixed inset-0 bg-slate-950/95 z-50 overflow-y-auto hidden px-4 py-6">
+        <div class="max-w-md mx-auto bg-slate-900 rounded-2xl border border-slate-700 p-5 space-y-5 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h2 class="text-lg font-bold text-amber-400 flex items-center gap-2">
+                    🚗💨 สร้างแผนท่องเที่ยวใหม่
+                </h2>
+                <button onclick="closeCreateTripModal()" class="text-slate-400 hover:text-white text-2xl font-semibold">&times;</button>
+            </div>
+
+            <!-- Trip basic details -->
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">ชื่อทริปสุดคูล *</label>
+                    <input id="newTripTitle" type="text" placeholder="เช่น หนีร้อนไปเกาะช้าง 3 วัน 2 คืน" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-semibold text-slate-400">รายชื่อจังหวัดที่วิ่งผ่าน (คั่นด้วยเครื่องหมายจุลภาค ,)</label>
+                        <span class="text-[10px] text-amber-400">💡 เว้นว่างไว้เพื่อรวมจากจุดแวะอัตโนมัติ</span>
+                    </div>
+                    <input id="newTripProvinces" type="text" placeholder="เช่น กรุงเทพ, ชลบุรี, ระยอง, ตราด" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+
+            <!-- Dynamic Stops Section -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-semibold text-slate-400 flex items-center gap-1">
+                        📍 แผนแวะเที่ยวและเดินทาง
+                    </label>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="addNewStopRow()" class="text-xs font-bold text-amber-400 hover:text-amber-300">➕ เพิ่มจุดแวะ</button>
+                    </div>
+                </div>
+                
+                <!-- AUTO CALCULATE ROW TRIGGER -->
+                <div class="bg-slate-950/80 p-2.5 rounded-xl border border-dashed border-amber-500/30 flex items-center justify-between gap-2">
+                    <div class="text-[10.5px] text-slate-300 leading-normal">
+                        <span>🤖 ขี้เกียจกรอกระยะทางและเวลาเอง?</span>
+                    </div>
+                    <button type="button" id="btnAutoCalcRoute" onclick="autoCalculateRouteData()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[11px] font-bold py-1.5 px-3 rounded-lg shadow-sm transition-all flex items-center gap-1 shrink-0">
+                        ✨ คำนวณอัตโนมัติ
+                    </button>
+                </div>
+
+                <div id="newStopsContainer" class="space-y-3 max-h-[220px] overflow-y-auto pr-1 no-scrollbar">
+                    <!-- Injected via script -->
+                </div>
+            </div>
+
+            <!-- Dynamic Budget Section -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-semibold text-slate-400">💸 ตั้งงบประมาณเบื้องต้น</label>
+                    <button type="button" onclick="addNewExpenseRow()" class="text-xs font-bold text-amber-400 hover:text-amber-300">➕ เพิ่มหมวดงบ</button>
+                </div>
+                
+                <div id="newExpensesContainer" class="space-y-2 max-h-[140px] overflow-y-auto pr-1 no-scrollbar">
+                    <!-- Injected via script with prefilled gas, food, hotel -->
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex gap-3 pt-3 border-t border-slate-800">
+                <button onclick="closeCreateTripModal()" class="flex-1 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">
+                    ยกเลิก
+                </button>
+                <button onclick="saveAndLaunchTrip()" class="flex-1 py-2.5 rounded-xl text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 shadow-md">
+                    🚀 เริ่มการเดินทาง!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: EDIT ACTIVE TRIP STOP -->
+    <div id="editStopModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 id="editStopModalTitle" class="text-sm font-bold text-amber-400">✏️ ปรับเปลี่ยนแผนท่องเที่ยว</h3>
+                <button onclick="closeEditStopModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <input type="hidden" id="editStopTargetIndex">
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">จังหวัดที่ตั้ง</label>
+                    <select id="editStopProv" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">ชื่อสถานที่ท่องเที่ยว/แวะพัก</label>
+                    <input id="editStopPlace" type="text" placeholder="ระบุชื่อวัด ร้านอาหาร หรือแลนด์มาร์ค" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-300 mb-1">ระยะทางถัดมา (กม.)</label>
+                        <input id="editStopKm" type="number" step="any" placeholder="0" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-300 mb-1">เวลาล้อหมุนออกเดินทาง</label>
+                        <input id="editStopDep" type="text" placeholder="เช่น 14:30" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone Action Inside Modal -->
+            <div class="bg-rose-500/10 p-2.5 rounded-xl border border-rose-500/20 flex items-center justify-between gap-2">
+                <span class="text-[10px] text-rose-300">หากยกเลิกแผนไม่แวะจุดนี้แล้ว:</span>
+                <button type="button" onclick="executeActiveStopDeletion()" class="bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[10px] px-2.5 py-1.5 rounded-lg transition-all">
+                    🗑️ ลบจุดนี้ทิ้ง
+                </button>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeEditStopModal()" class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">ยกเลิก</button>
+                <button onclick="saveActiveStopEdit()" class="flex-1 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">เซฟแก้ไข</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: ADD STOP ON THE GO (แทรกจุดแวะด่วนระหว่างทางแบบทันที) -->
+    <div id="addStopOnTheGoModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-sm font-bold text-emerald-400">➕ แทรกจุดแวะเที่ยวระหว่างทาง</h3>
+                <button onclick="closeAddStopOnTheGoModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <input type="hidden" id="addStopInsertIndex">
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">จังหวัดที่ตั้ง</label>
+                    <select id="addStopOnTheGoProv" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                        <!-- Loaded dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-slate-300 mb-1">ชื่อสถานที่ที่ค้นพบ (เช่น คาเฟ่ริมคลอง C)</label>
+                    <input id="addStopOnTheGoPlace" type="text" placeholder="ระบุชื่อสถานที่ท่องเที่ยวหรือจุดแวะ" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-300 mb-1">ระยะทางห่างมา (กม.)</label>
+                        <input id="addStopOnTheGoKm" type="number" step="any" placeholder="ห่างจากจุดก่อนหน้ากี่กิโลเมตร" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-semibold text-slate-300 mb-1">เวลาออกเดินทางโดยประมาณ</label>
+                        <input id="addStopOnTheGoDep" type="text" placeholder="เช่น 15:30" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                    </div>
+                </div>
+                <p class="text-[10px] text-slate-400 leading-normal">💡 คุณสามารถเว้นว่างระยะทางและเวลาออกไว้ได้ จากนั้นกด "เซฟแทรกจุด" แล้วกดยิงคำนวณระยะทาง GPS ใหม่ทั้งหมดที่ปุ่มบน Timeline ได้เลย!</p>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeAddStopOnTheGoModal()" class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">ยกเลิก</button>
+                <button onclick="executeStopInsertion()" class="flex-1 py-2 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">เซฟแทรกจุด</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: ADD ACTIVE EXPENSE (เพิ่มหมวดงบด่วนในทริปปัจจุบัน) -->
+    <div id="addActiveExpenseModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-base font-bold text-amber-400">➕ เพิ่มหมวดงบประมาณในทริปนี้</h3>
+                <button onclick="closeAddActiveExpenseModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">ชื่อหมวดค่าใช้จ่าย</label>
+                    <input id="activeExpLabel" type="text" placeholder="เช่น ค่าของฝาก, ค่าทางด่วน" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">งบประมาณที่วางแผนไว้ (บาท)</label>
+                    <input id="activeExpEstimate" type="number" placeholder="เช่น 500" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeAddActiveExpenseModal()" class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">ยกเลิก</button>
+                <button onclick="saveActiveExpenseItem()" class="flex-1 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">เพิ่มเลย</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: SETTINGS -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/95 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-sm w-full space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                <h3 class="text-base font-bold text-amber-400">⚙️ การตั้งค่าเครื่องมือนำทาง</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white text-xl font-bold">&times;</button>
+            </div>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">เลือกเครื่องมือคำนวณหลัก (Routing Engine)</label>
+                    <select id="settingEngineChoice" onchange="toggleApiKeyField()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                        <option value="osrm">🆓 แผนที่ฟรีทันใจ (Photon + OSRM) - ไม่ต้องใช้คีย์</option>
+                        <option value="gmaps">👑 Google Maps Premium - แม่นยำสูงสุด (ใช้ Key)</option>
+                    </select>
+                    <p class="text-[10px] text-slate-400 mt-1 leading-normal">ระบบจะดึงระยะทางขับรถจริงและระยะเวลาเฉลี่ยผ่านระบบแผนที่แบบอัจฉริยะ</p>
+                </div>
+
+                <div id="apiKeyFieldContainer" class="hidden space-y-2">
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Google Maps API Key (ที่เปิดใช้งาน Billing)</label>
+                    <div class="flex gap-2">
+                        <input id="settingApiKey" type="password" placeholder="AIzaSy..." class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-amber-500">
+                        <button onclick="clearApiKey()" class="text-[11px] font-bold text-rose-400 bg-rose-500/10 px-3 py-1.5 rounded-xl border border-rose-500/20 hover:bg-rose-500/20 shrink-0">ล้างคีย์</button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 leading-normal">รหัส API Key ของคุณจะบันทึกไว้ใน Browser ของมือถือเครื่องนี้อย่างปลอดภัย เพื่อใช้ยิงดึง Distance Matrix</p>
+                    <p class="text-[10px] text-amber-400 mt-2 bg-amber-500/10 p-2 rounded-xl border border-amber-500/20 leading-relaxed">🔒 เพื่อความปลอดภัยขั้นสูงสุดในการใช้งานจริง: โปรดตั้งค่าข้อจำกัดการเข้าถึง (API Key Restrictions) บน Google Cloud Console ให้รับเฉพาะ HTTP Referrers โดเมนของคุณเพื่อป้องกันการถูกสวมรอยใช้คีย์จากที่อื่น</p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 pt-2 border-t border-slate-800">
+                <button onclick="closeSettingsModal()" class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300">ยกเลิก</button>
+                <button onclick="saveSettings()" class="flex-1 py-2 rounded-lg text-xs font-bold bg-amber-500 text-slate-950">บันทึกตั้งค่า</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Custom Confirmation Dialog -->
+    <div id="confirmDeleteModal" class="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl p-5 max-w-xs w-full text-center space-y-4">
+            <span class="text-3xl">⚠️</span>
+            <h3 class="text-base font-bold text-white">ต้องการลบทริปนี้จริงหรือไม่?</h3>
+            <p class="text-xs text-slate-400">ประวัติการบันทึกเวลาจริงและตัวเลขที่จ่ายจริงทั้งหมดของทริปที่เลือกจะหายไปอย่างถาวร</p>
+            <div class="flex gap-2">
+                <button onclick="closeDeleteConfirmation()" class="flex-1 py-2 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:bg-slate-700">ยกเลิก</button>
+                <button onclick="executeTripDeletion()" class="flex-1 py-2 rounded-lg text-xs font-bold bg-rose-500 text-white hover:bg-rose-400">ลบทิ้งเลย</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar for Mobile -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-800/95 backdrop-blur-md border-t border-slate-700 py-2.5 px-4 shadow-2xl z-50">
+        <div class="max-w-md mx-auto flex items-center justify-between">
+            <!-- Nav Item 1: Timeline -->
+            <button onclick="switchTab('timeline')" id="navTimeline" class="flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">แผนเดินทาง</span>
+            </button>
+
+            <!-- Nav Item 2: Expenses -->
+            <button onclick="switchTab('expenses')" id="navExpenses" class="flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">สรุปเงิน</span>
+            </button>
+
+            <!-- Nav Item 3: Summary -->
+            <button onclick="switchTab('summary')" id="navSummary" class="flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                <span class="text-[10px] font-medium">สรุปทุกทริป</span>
+            </button>
+
+            <!-- Nav Item 4: Conquest Map -->
+            <button onclick="switchTab('map')" id="navMap" class="flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                </svg>
+                <span class="text-[10px] font-medium">77 จังหวัด</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Notification Alert Box (No alerts used) -->
+    <div id="toastMessage" class="fixed top-16 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 font-semibold px-4 py-2.5 rounded-full shadow-lg text-xs opacity-0 scale-95 pointer-events-none transition-all duration-300 z-50">
+        เช็กอินเรียบร้อย! 📍 เวลาเดินทางถูกบันทึกแล้ว
+    </div>
+
+    <!-- Script Area containing Pre-loaded trip datasets directly parsed from user Excel -->
+    <script>
+        // Complete list of all 77 Thai provinces sorted alphabetically for dropdowns
+        const allProvincesList = [
+            "กระบี่", "กรุงเทพ", "กาญจนบุรี", "กาฬสินธุ์", "กำแพงเพชร", "ขอนแก่น", "จันทบุรี", "ฉะเชิงเทรา", "ชลบุรี", "ชัยนาท", 
+            "ชัยภูมิ", "ชุมพร", "เชียงราย", "เชียงใหม่", "ตรัง", "ตราด", "ตาก", "นครนายก", "นครปฐม", "นครพนม", 
+            "นครราชสีมา", "นครศรีธรรมราช", "นครสวรรค์", "นนทบุรี", "นราธิวาส", "น่าน", "บึงกาฬ", "บุรีรัมย์", "ปทุมธานี", "ประจวบคีรีขันธ์", 
+            "ปราจีนบุรี", "ปัตตานี", "พระนครศรีอยุธยา", "พะเยา", "พังงา", "พัทลุง", "พิจิตร", "พิษณุโลก", "เพชรบุรี", "เพชรบูรณ์", 
+            "แพร่", "ภูเก็ต", "มหาสารคาม", "มุกดาหาร", "แม่ฮ่องสอน", "ยโสธร", "ยะลา", "ร้อยเอ็ด", "ระนอง", "ระยอง", 
+            "ราชบุรี", "ลพบุรี", "ลำปาง", "ลำพูน", "เลย", "ศรีสะเกษ", "สกลนคร", "สงขลา", "สตูล", "สมุทรปราการ", 
+            "สมุทรสงคราม", "สมุทรสาคร", "สระแก้ว", "สระบุรี", "สิงห์บุรี", "สุโขทัย", "สุพรรณบุรี", "สุราษฎร์ธานี", "สุรินทร์", "หนองคาย", 
+            "หนองบัวลำภู", "อ่างทอง", "อำนาจเจริญ", "อุดรธานี", "อุตรดิตถ์", "อุทัยธานี", "อุบลราชธานี"
+        ];
+
+        // Thailand Cartogram/Tile Grid Map position & abbreviation configurations (r: row, c: col)
+        // Fixed: Nonthaburi shifted to r:10, c:3, Pathum Thani to r:9, c:3 to prevent overlaps
+        const provinceTileConfig = {
+            "เชียงราย": { r: 1, c: 4, abbr: "ชร" },
+            "แม่ฮ่องสอน": { r: 2, c: 2, abbr: "มส" },
+            "เชียงใหม่": { r: 2, c: 3, abbr: "ชม" },
+            "พะเยา": { r: 2, c: 4, abbr: "พย" },
+            "น่าน": { r: 2, c: 5, abbr: "นน" },
+            "ลำพูน": { r: 3, c: 3, abbr: "ลพ" },
+            "ลำปาง": { r: 3, c: 4, abbr: "ลป" },
+            "แพร่": { r: 3, c: 5, abbr: "พร" },
+            "อุตรดิตถ์": { r: 3, c: 6, abbr: "อต" },
+            "ตาก": { r: 4, c: 2, abbr: "ตก" },
+            "สุโขทัย": { r: 4, c: 4, abbr: "สท" },
+            "พิษณุโลก": { r: 4, c: 5, abbr: "พล" },
+            "เลย": { r: 3, c: 7, abbr: "ลย" },
+            "หนองคาย": { r: 3, c: 8, abbr: "นค" },
+            "บึงกาฬ": { r: 3, c: 9, abbr: "บก" },
+            "กำแพงเพชร": { r: 5, c: 3, abbr: "กพ" },
+            "พิจิตร": { r: 5, c: 4, abbr: "พจ" },
+            "เพชรบูรณ์": { r: 5, c: 5, abbr: "พช" },
+            "หนองบัวลำภู": { r: 4, c: 7, abbr: "นภ" },
+            "อุดรธานี": { r: 4, c: 8, abbr: "อด" },
+            "สกลนคร": { r: 4, c: 9, abbr: "สน" },
+            "นครพนม": { r: 4, c: 10, abbr: "นพ" },
+            "อุทัยธานี": { r: 6, c: 3, abbr: "อน" },
+            "นครสวรรค์": { r: 6, c: 4, abbr: "นส" },
+            "ชัยภูมิ": { r: 5, c: 6, abbr: "ชย" },
+            "ขอนแก่น": { r: 5, c: 7, abbr: "ขก" },
+            "กาฬสินธุ์": { r: 5, c: 8, abbr: "กส" },
+            "มุกดาหาร": { r: 5, c: 9, abbr: "มฮ" },
+            "มหาสารคาม": { r: 6, c: 7, abbr: "มค" },
+            "ร้อยเอ็ด": { r: 6, c: 8, abbr: "รอ" },
+            "ยโสธร": { r: 6, c: 9, abbr: "ยส" },
+            "อำนาจเจริญ": { r: 6, c: 10, abbr: "อจ" },
+            "กาญจนบุรี": { r: 7, c: 2, abbr: "กจ" },
+            "สุพรรณบุรี": { r: 8, c: 3, abbr: "สพ" },
+            "ชัยนาท": { r: 7, c: 3, abbr: "ชน" },
+            "สิงห์บุรี": { r: 7, c: 4, abbr: "สห" },
+            "ลพบุรี": { r: 7, c: 5, abbr: "ลบ" },
+            "นครราชสีมา": { r: 7, c: 6, abbr: "นม" },
+            "บุรีรัมย์": { r: 7, c: 7, abbr: "บร" },
+            "สุรินทร์": { r: 7, c: 8, abbr: "สร" },
+            "ศรีสะเกษ": { r: 7, c: 9, abbr: "ศก" },
+            "อุบลราชธานี": { r: 7, c: 10, abbr: "อบ" },
+            "ราชบุรี": { r: 8, c: 2, abbr: "รบ" },
+            "อ่างทอง": { r: 8, c: 4, abbr: "อท" },
+            "สระบุรี": { r: 8, c: 5, abbr: "สบ" },
+            "นครนายก": { r: 8, c: 6, abbr: "นย" },
+            "ปราจีนบุรี": { r: 9, c: 6, abbr: "ปจ" },
+            "สระแก้ว": { r: 9, c: 7, abbr: "สก" },
+            "เพชรบุรี": { r: 9, c: 2, abbr: "พบ" },
+            "นนทบุรี": { r: 10, c: 3, abbr: "นบ" },
+            "ปทุมธานี": { r: 9, c: 3, abbr: "ปท" },
+            "พระนครศรีอยุธยา": { r: 9, c: 4, abbr: "อย" },
+            "ฉะเชิงเทรา": { r: 10, c: 5, abbr: "ฉช" },
+            "นครปฐม": { r: 11, c: 3, abbr: "นป" },
+            "กรุงเทพ": { r: 11, c: 4, abbr: "กทม" },
+            "ชลบุรี": { r: 11, c: 5, abbr: "ชบ" },
+            "ระยอง": { r: 11, c: 6, abbr: "รย" },
+            "จันทบุรี": { r: 11, c: 7, abbr: "จบ" },
+            "ประจวบคีรีขันธ์": { r: 10, c: 2, abbr: "ปข" },
+            "สมุทรสงคราม": { r: 12, c: 2, abbr: "สส" },
+            "สมุทรสาคร": { r: 12, c: 3, abbr: "สค" },
+            "สมุทรปราการ": { r: 12, c: 4, abbr: "สป" },
+            "ตราด": { r: 12, c: 8, abbr: "ตร" },
+            "ชุมพร": { r: 13, c: 2, abbr: "ชพ" },
+            "ระนอง": { r: 14, c: 1, abbr: "รน" },
+            "สุราษฎร์ธานี": { r: 14, c: 2, abbr: "สฎ" },
+            "พังงา": { r: 15, c: 1, abbr: "พง" },
+            "กระบี่": { r: 15, c: 2, abbr: "กบ" },
+            "นครศรีธรรมราช": { r: 15, c: 3, abbr: "นศ" },
+            "ภูเก็ต": { r: 16, c: 1, abbr: "ภก" },
+            "ตรัง": { r: 16, c: 2, abbr: "ตง" },
+            "พัทลุง": { r: 16, c: 3, abbr: "พท" },
+            "สตูล": { r: 17, c: 2, abbr: "สต" },
+            "สงขลา": { r: 17, c: 3, abbr: "สข" },
+            "ปัตตานี": { r: 17, c: 4, abbr: "ปน" },
+            "ยะลา": { r: 18, c: 3, abbr: "ยล" },
+            "นราธิวาส": { r: 18, c: 4, abbr: "นธ" }
+        };
+
+        // Database of User Roadtrips (Presets)
+        const presetRoadTrips = {
+            audit_doi: {
+                title: "⛰️ หนี Audit ไปติดดอย (ดอยขะมึง)",
+                provinces: "กำแพงเพชร - สุโขทัย - พิษณุโลก - พิจิตร",
+                provincesList: ["กำแพงเพชร", "สุโขทัย", "พิษณุโลก", "พิจิตร", "กรุงเทพ"],
+                stops: [
+                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true },
+                    { id: 2, prov: "กำแพงเพชร", place: "น้ำตกคลองลาน (ปิกนิกกินข้าวเช้า)", km: 351, dur: "04:43", est_arr: "08:43", est_dep: "08:58", actual_arr: null, checkIn: false },
+                    { id: 3, prov: "กำแพงเพชร", place: "พิพิธภัณฑสถานแห่งชาติกำแพงเพชร", km: 60, dur: "01:00", est_arr: "09:58", est_dep: "10:58", actual_arr: null, checkIn: false },
+                    { id: 4, prov: "สุโขทัย", place: "สตรีทอาร์ต สวรรคโลก (เดินถ่ายรูปเก๋ๆ)", km: 90, dur: "01:25", est_arr: "12:12", est_dep: "12:57", actual_arr: null, checkIn: false },
+                    { id: 5, prov: "พิษณุโลก", place: "วัดพระศรีรัตนมหาธาตุวรมหาวิหาร (ไหว้ย่าโมทอง)", km: 90, dur: "01:30", est_arr: "14:27", est_dep: "14:42", actual_arr: null, checkIn: false },
+                    { id: 6, prov: "พิษณุโลก", place: "ก๋วยเตี๋ยวห้อยขาริมน่าน จ.พิษณุโลก (บ่ายแก่ๆ)", km: 0.5, dur: "00:01", est_arr: "14:43", est_dep: "15:13", actual_arr: null, checkIn: false },
+                    { id: 7, prov: "พิจิตร", place: "สถานีรถไฟพิจิตร (แลนด์มาร์คโบราณ)", km: 60, dur: "01:00", est_arr: "16:13", est_dep: "16:53", actual_arr: null, checkIn: false }
+                ],
+                expenses: [
+                    { category: "gas", label: "⛽ ค่าน้ำมันเชื้อเพลิง (@35)", estimate: 4928, actual: 0 },
+                    { category: "hotel", label: "🏡 ค่าที่พัก (3 วัน)", estimate: 2730, actual: 0 },
+                    { category: "food", label: "🍛 ค่าอาหารและสังสรรค์ (@300/มื้อ)", estimate: 4200, actual: 0 },
+                    { category: "ticket", label: "🎟️ ค่าเข้าสถานที่ท่องเที่ยวและอุทยาน", estimate: 500, actual: 0 }
+                ]
+            },
+            chan_trat: {
+                title: "🏖️ จันทบุรี-ตราด 2 วัน 1 คืน",
+                provinces: "กรุงเทพ - ตราด - จันทบุรี",
+                provincesList: ["กรุงเทพ", "ตราด", "จันทบุรี"],
+                stops: [
+                    { id: 1, prov: "กรุงเทพ", place: "เริ่มจากบ้าน @ดินแดง", km: 0, dur: "00:00", est_arr: "04:00", est_dep: "04:00", actual_arr: "04:00", checkIn: true },
+                    { id: 2, prov: "ตราด", place: "ส่วนที่แคบที่สุดในประเทศไทย", km: 391, dur: "05:19", est_arr: "09:19", est_dep: "09:34", actual_arr: null, checkIn: false },
+                    { id: 3, prov: "ตราด", place: "ศาลกรมหลวงชุมพร​ เขตอุดมศักดิ์ คลองขาม", km: 10, dur: "00:15", est_arr: "09:49", est_dep: "10:04", actual_arr: null, checkIn: false },
+                    { id: 4, prov: "ตราด", place: "ก๋วยเตี๋ยวห้อยขาริมคลองไม้รูด (ร้านเด็ด)", km: 33, dur: "00:32", est_arr: "10:36", est_dep: "11:06", actual_arr: null, checkIn: false },
+                    { id: 5, prov: "ตราด", place: "น้ำตกสะพานหิน (เล่นน้ำตก)", km: 28.4, dur: "00:23", est_arr: "11:29", est_dep: "12:29", actual_arr: null, checkIn: false },
+                    { id: 6, prov: "จันทบุรี", place: "ซีวิว รีสอร์ท จันทบุรี (เช็กอินที่พัก)", km: 75, dur: "01:11", est_arr: "17:35", est_dep: "---", actual_arr: null, checkIn: false }
+                ],
+                expenses: [
+                    { category: "gas", label: "⛽ ค่าน้ำมันเชื้อเพลิง (@35)", estimate: 2681, actual: 0 },
+                    { category: "food", label: "🍛 ค่าอาหาร & แดกเบียร์ริมหาด", estimate: 2500, actual: 0 },
+                    { category: "hotel", label: "🏡 โรงแรม Seaview Resort", estimate: 1500, actual: 0 },
+                    { category: "ticket", label: "🎟️ ค่าบริการสถานที่อุทยาน", estimate: 200, actual: 0 }
+                ]
+            }
+        };
+
+        let activeTripKey = "audit_doi";
+        let splitNumber = 1;
+        let globalVisitedProvinces = JSON.parse(localStorage.getItem('visitedProvinces')) || ["กรุงเทพ"];
+        let provinceFilter = "trip"; // 'trip' or 'all'
+        let provinceMapLayout = "grid"; // 'grid' (Thailand map) or 'list' (alphabetical buttons)
+        
+        // Runtime container for combined trips
+        let allRoadTrips = {};
+        let activeTripData = null;
+
+        // XSS Prevention: Safe HTML Escaper function
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // On Window Load Initializer
+        window.onload = function() {
+            loadTripsDatabase();
+            
+            // Restore last active route
+            activeTripKey = localStorage.getItem('last_active_trip_key') || "audit_doi";
+            if (!allRoadTrips[activeTripKey]) {
+                activeTripKey = "audit_doi";
+            }
+            
+            const savedState = localStorage.getItem(`trip_state_${activeTripKey}`);
+            if (savedState) {
+                activeTripData = JSON.parse(savedState);
+            } else {
+                activeTripData = JSON.parse(JSON.stringify(allRoadTrips[activeTripKey]));
+            }
+
+            // Restore engine choice from settings
+            const savedEngine = localStorage.getItem('roadtrip_engine') || 'osrm';
+            document.getElementById("settingEngineChoice").value = savedEngine;
+            document.getElementById("settingApiKey").value = localStorage.getItem('roadtrip_gmaps_key') || '';
+            toggleApiKeyField();
+
+            // Set Initial Active Layout states visually
+            setMapLayout(provinceMapLayout);
+
+            populateTripSelector();
+            renderApp();
+            calculateTotals();
+            populateProvincesDropdowns();
+        }
+
+        function loadTripsDatabase() {
+            allRoadTrips = JSON.parse(JSON.stringify(presetRoadTrips));
+            const customTrips = JSON.parse(localStorage.getItem('custom_trips_store')) || {};
+            Object.keys(customTrips).forEach(key => {
+                allRoadTrips[key] = customTrips[key];
+            });
+        }
+
+        function populateTripSelector() {
+            const selector = document.getElementById("routeSelector");
+            selector.innerHTML = "";
+            Object.keys(allRoadTrips).forEach(key => {
+                const trip = allRoadTrips[key];
+                const option = document.createElement("option");
+                option.value = key;
+                // Safe Escaped text value injection inside dropdown option node
+                option.textContent = key.startsWith("custom_") ? "⭐ " + trip.title : trip.title;
+                option.selected = (key === activeTripKey);
+                selector.appendChild(option);
+            });
+        }
+
+        function populateProvincesDropdowns() {
+            const editStopProvSelect = document.getElementById("editStopProv");
+            const addStopOnTheGoProvSelect = document.getElementById("addStopOnTheGoProv");
+
+            let provinceOptions = `<option value="">เลือกจังหวัด</option>`;
+            allProvincesList.forEach(p => {
+                provinceOptions += `<option value="${escapeHtml(p)}">📍 ${escapeHtml(p)}</option>`;
+            });
+
+            editStopProvSelect.innerHTML = provinceOptions;
+            addStopOnTheGoProvSelect.innerHTML = provinceOptions;
+        }
+
+        // Safe storage item setting with graceful catch of quota-limits exceptions
+        function saveState() {
+            try {
+                localStorage.setItem(`trip_state_${activeTripKey}`, JSON.stringify(activeTripData));
+                localStorage.setItem('visitedProvinces', JSON.stringify(globalVisitedProvinces));
+                localStorage.setItem('last_active_trip_key', activeTripKey);
+            } catch (e) {
+                console.error("Local storage allocation error: ", e);
+                showToast("⚠️ พื้นที่จัดเก็บเต็ม กรุณาลบทริปเก่าออกบางส่วน");
+            }
+        }
+
+        function switchRoute(routeKey) {
+            activeTripKey = routeKey;
+            const savedState = localStorage.getItem(`trip_state_${activeTripKey}`);
+            if (savedState) {
+                activeTripData = JSON.parse(savedState);
+            } else {
+                activeTripData = JSON.parse(JSON.stringify(allRoadTrips[routeKey]));
+            }
+
+            if (activeTripData.provincesList) {
+                activeTripData.provincesList.forEach(prov => {
+                    if (!globalVisitedProvinces.includes(prov)) {
+                        globalVisitedProvinces.push(prov);
+                    }
+                });
+            }
+
+            saveState();
+            renderApp();
+            calculateTotals();
+            showToast("📂 สลับข้อมูลเส้นทางสำเร็จ!");
+        }
+
+        function updateDeleteButtonVisibility() {
+            const btn = document.getElementById("btnDeleteTrip");
+            if (activeTripKey.startsWith("custom_")) {
+                btn.classList.remove("hidden");
+            } else {
+                btn.classList.add("hidden");
+            }
+        }
+
+        function openDeleteConfirmation() {
+            document.getElementById("confirmDeleteModal").classList.remove("hidden");
+        }
+        function closeDeleteConfirmation() {
+            document.getElementById("confirmDeleteModal").classList.add("hidden");
+        }
+        function executeTripDeletion() {
+            // Disable deletion action button list to prevent multi-tap double triggering
+            const confirmBtn = document.querySelector("#confirmDeleteModal button[onclick='executeTripDeletion()']");
+            if (confirmBtn) {
+                confirmBtn.disabled = true;
+                confirmBtn.innerText = "กำลังลบ...";
+            }
+            
+            setTimeout(() => {
+                localStorage.removeItem(`trip_state_${activeTripKey}`);
+                const customTrips = JSON.parse(localStorage.getItem('custom_trips_store')) || {};
+                delete customTrips[activeTripKey];
+                localStorage.setItem('custom_trips_store', JSON.stringify(customTrips));
+
+                showToast("🗑️ ลบทริปนี้เรียบร้อยแล้ว!");
+                loadTripsDatabase();
+                activeTripKey = "audit_doi";
+                activeTripData = JSON.parse(JSON.stringify(allRoadTrips[activeTripKey]));
+                populateTripSelector();
+                
+                closeDeleteConfirmation();
+                
+                // Re-enable delete button
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.innerText = "ลบทิ้งเลย";
+                }
+                
+                saveState();
+                renderApp();
+                calculateTotals();
+            }, 300);
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("toastMessage");
+            toast.innerText = msg;
+            toast.classList.remove("opacity-0", "scale-95", "pointer-events-none");
+            toast.classList.add("opacity-100", "scale-100");
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "scale-95", "pointer-events-none");
+                toast.classList.remove("opacity-100", "scale-100");
+            }, 3000);
+        }
+
+        function setSplitter(peopleCount) {
+            splitNumber = peopleCount;
+            for (let i = 1; i <= 3; i++) {
+                const btn = document.getElementById(`btnSplit${i}`);
+                if (i === peopleCount) {
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-250 bg-amber-500 text-slate-950";
+                } else {
+                    btn.className = "px-3 py-1 rounded-lg text-xs font-semibold transition-all duration-250 text-slate-400 hover:text-slate-200";
+                }
+            }
+            calculateTotals();
+        }
+
+        function setProvinceFilter(filterType) {
+            provinceFilter = filterType;
+            const btnTrip = document.getElementById("btnFilterTrip");
+            const btnAll = document.getElementById("btnFilterAll");
+            const searchContainer = document.getElementById("provinceSearchContainer");
+            const listTitle = document.getElementById("provinceListTitle");
+
+            if (filterType === 'trip') {
+                btnTrip.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-250";
+                btnAll.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-250";
+                searchContainer.classList.add("hidden");
+                listTitle.innerText = "รายชื่อจังหวัดในแผนทริปครั้งนี้";
+            } else {
+                btnTrip.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-250";
+                btnAll.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-250";
+                
+                // Show search box only if in List view mode
+                if (provinceMapLayout === 'list') {
+                    searchContainer.classList.remove("hidden");
+                } else {
+                    searchContainer.classList.add("hidden");
+                }
+                listTitle.innerText = "ทำเนียบ 77 จังหวัดทั้งหมด";
+                document.getElementById("provinceSearchInput").value = ""; // clear search
+            }
+            renderApp();
+        }
+
+        // Toggle map layout between Tile Grid Map & Original button list
+        function setMapLayout(layout) {
+            provinceMapLayout = layout;
+            const btnGrid = document.getElementById("btnLayoutGrid");
+            const btnList = document.getElementById("btnLayoutList");
+            const searchContainer = document.getElementById("provinceSearchContainer");
+
+            if (layout === 'grid') {
+                btnGrid.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-200";
+                btnList.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200";
+                searchContainer.classList.add("hidden");
+            } else {
+                btnGrid.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all duration-200";
+                btnList.className = "flex-1 text-center py-1.5 rounded-lg text-xs font-semibold bg-amber-500 text-slate-950 transition-all duration-200";
+                if (provinceFilter === 'all') {
+                    searchContainer.classList.remove("hidden");
+                }
+            }
+            renderApp();
+        }
+
+        function calculateTotals() {
+            if (!activeTripData) return;
+
+            let totalEstimate = 0;
+            let totalActual = 0;
+            let checkedInCount = 0;
+
+            activeTripData.stops.forEach(stop => {
+                if (stop.checkIn) checkedInCount++;
+            });
+
+            // Fallback empty array
+            if (!activeTripData.expenses) activeTripData.expenses = [];
+
+            activeTripData.expenses.forEach(exp => {
+                totalEstimate += Number(exp.estimate) || 0;
+                totalActual += Number(exp.actual) || 0;
+            });
+
+            const totalDistance = activeTripData.stops.reduce((sum, stop) => sum + (stop.km || 0), 0);
+            document.getElementById("statDistance").innerText = `${totalDistance.toLocaleString()} กม.`;
+            document.getElementById("statCheckIn").innerText = `${checkedInCount} / ${activeTripData.stops.length} จุด`;
+
+            document.getElementById("totalEstimateText").innerText = `฿${totalEstimate.toLocaleString()}`;
+            document.getElementById("totalActualText").innerText = `฿${totalActual.toLocaleString()}`;
+            
+            const pct = totalEstimate > 0 ? Math.min((totalActual / totalEstimate) * 100, 100) : 0;
+            document.getElementById("expenseProgressBar").style.width = `${pct}%`;
+            document.getElementById("statExpensePercent").innerText = `${Math.round(pct)}%`;
+
+            if (totalActual > totalEstimate) {
+                document.getElementById("expenseProgressBar").classList.remove("from-emerald-500", "to-amber-500");
+                document.getElementById("expenseProgressBar").classList.add("bg-rose-500");
+            } else {
+                document.getElementById("expenseProgressBar").classList.add("from-emerald-500", "to-amber-500");
+                document.getElementById("expenseProgressBar").classList.remove("bg-rose-500");
+            }
+
+            const diff = totalEstimate - totalActual;
+            const diffLabel = document.getElementById("diffCostText");
+            if (diff >= 0) {
+                diffLabel.innerText = `ประหยัดกว่างบ: ฿${diff.toLocaleString()}`;
+                diffLabel.className = "text-emerald-400 font-semibold";
+            } else {
+                diffLabel.innerText = `บานปลายเกินงบ: ฿${Math.abs(diff).toLocaleString()}`;
+                diffLabel.className = "text-rose-400 font-semibold";
+            }
+
+            const perPerson = Math.round(totalActual / splitNumber);
+            document.getElementById("splitCostText").innerText = `เฉลี่ยคนละ: ฿${perPerson.toLocaleString()} (หาร ${splitNumber} คน)`;
+
+            const totalProvincesCount = allProvincesList.length;
+            const myCheckedCount = globalVisitedProvinces.length;
+            document.getElementById("provincesCheckedCount").innerText = `${myCheckedCount} / ${totalProvincesCount} จังหวัด`;
+            const mapProgressPct = (myCheckedCount / totalProvincesCount) * 100;
+            document.getElementById("provincesProgressBar").style.width = `${mapProgressPct}%`;
+
+            updateDeleteButtonVisibility();
+        }
+
+        function renderApp() {
+            if (!activeTripData) return;
+
+            document.getElementById("routeTitle").innerText = activeTripData.title;
+            document.getElementById("routeProvinces").innerText = `📍 ${activeTripData.provinces}`;
+
+            const timelineContainer = document.getElementById("timelineList");
+            timelineContainer.innerHTML = "";
+
+            activeTripData.stops.forEach((stop, index) => {
+                const isChecked = stop.checkIn;
+                const googleMapQuery = encodeURIComponent(`${stop.place} ${stop.prov}`);
+                const navLink = `https://www.google.com/maps/search/?api=1&query=${googleMapQuery}`;
+
+                const stopEl = document.createElement("div");
+                stopEl.className = "relative transition-all duration-300";
+                
+                // Safe Variable HTML Escaping to block DOM-XSS vectors cleanly
+                const placeEsc = escapeHtml(stop.place);
+                const provEsc = escapeHtml(stop.prov);
+                const estArrEsc = escapeHtml(stop.est_arr);
+                const estDepEsc = escapeHtml(stop.est_dep);
+                const durEsc = escapeHtml(stop.dur);
+                const actualArrEsc = escapeHtml(stop.actual_arr);
+
+                // Add stops item card
+                let timelineCardHtml = `
+                    <div class="relative pl-2 mb-4">
+                        <!-- Bullet icon -->
+                        <span class="absolute -left-10 top-0.5 flex h-7 w-7 items-center justify-center rounded-full border-2 transition-all duration-300 ${isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950 scale-110 shadow-lg shadow-emerald-500/20' : 'bg-slate-900 border-slate-700 text-slate-400'}">
+                            ${isChecked ? '✓' : index + 1}
+                        </span>
+
+                        <div class="bg-slate-800 p-4 rounded-xl border transition-colors duration-300 ${isChecked ? 'border-emerald-500/50 bg-slate-700/80' : 'border-slate-700/60'} space-y-2">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1 min-w-0 pr-2">
+                                    <span class="text-[10px] bg-slate-700 text-slate-200 px-2 py-0.5 rounded-full font-medium">${provEsc}</span>
+                                    <h4 class="text-sm font-bold text-slate-100 mt-1 truncate">${placeEsc}</h4>
+                                </div>
+                                <div class="flex flex-col items-end gap-1 shrink-0">
+                                    <span class="text-xs font-mono text-slate-400">${stop.km > 0 ? `+${stop.km} กม.` : 'จุดตั้งต้น'}</span>
+                                    <!-- Edit active stop button -->
+                                    <button onclick="openEditStopModal(${index})" class="text-[11px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-0.5 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                                        ✏️ แก้ไข
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-2 py-1 text-[11px] font-mono text-slate-400 border-t border-b border-slate-700/40">
+                                <div>🕒 ออก: <span class="text-slate-200">${estDepEsc || '---'}</span></div>
+                                <div>🚗 ถึง (กะ): <span class="text-amber-400">${estArrEsc || '---'}</span></div>
+                                <div>⏱️ เดินทาง: <span class="text-slate-200">${durEsc || '---'}</span></div>
+                            </div>
+
+                            <div class="flex items-center gap-2 pt-1.5">
+                                <button onclick="triggerCheckIn(${stop.id})" class="flex-1 text-center py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${isChecked ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500 text-slate-950 hover:bg-amber-400'}">
+                                    📍 ${isChecked ? `ถึงแล้วเมื่อ ${actualArrEsc}` : 'เช็กอินพิกัดนี้'}
+                                </button>
+                                <a href="${navLink}" target="_blank" class="bg-slate-700 text-slate-200 py-2 px-3 rounded-lg text-xs font-medium hover:bg-slate-600 flex items-center justify-center">
+                                    🗺️ นำทาง
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Add STOP INSERTION trigger button between active legs
+                let insertStopTriggerHtml = '';
+                if (index < activeTripData.stops.length - 1) {
+                    insertStopTriggerHtml = `
+                        <div class="flex items-center justify-center my-1.5 pr-2 pl-2">
+                            <button onclick="openAddStopOnTheGoModal(${index + 1})" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 py-1 px-3 border border-dashed border-emerald-500/20 rounded-full transition-all flex items-center gap-1">
+                                ➕ แทรกจุดแวะเพิ่มตรงนี้
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // For the last element, add trigger button to append at end
+                    insertStopTriggerHtml = `
+                        <div class="flex items-center justify-center mt-3 pr-2 pl-2">
+                            <button onclick="openAddStopOnTheGoModal(${index + 1})" class="text-[10px] font-bold text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/15 py-1.5 px-4 border border-dashed border-emerald-500/20 rounded-full transition-all flex items-center gap-1">
+                                ➕ เพิ่มจุดแวะต่อท้ายสุด
+                            </button>
+                        </div>
+                    `;
+                }
+
+                stopEl.innerHTML = timelineCardHtml + insertStopTriggerHtml;
+                timelineContainer.appendChild(stopEl);
+            });
+
+            // Update Expenses list
+            const expensesContainer = document.getElementById("expenseFieldsList");
+            expensesContainer.innerHTML = "";
+
+            if (!activeTripData.expenses) activeTripData.expenses = [];
+
+            activeTripData.expenses.forEach((exp, idx) => {
+                const itemEl = document.createElement("div");
+                itemEl.className = "bg-slate-800 p-3.5 rounded-xl border border-slate-700 flex items-center justify-between gap-4";
+                
+                // Safe Variable HTML Escaping to block DOM-XSS vectors cleanly
+                const labelEsc = escapeHtml(exp.label);
+
+                itemEl.innerHTML = `
+                    <div class="flex-1 min-w-0 flex items-center gap-2.5">
+                        <button onclick="deleteExpenseItem(${idx})" class="text-slate-500 hover:text-rose-500 p-1 text-sm transition-colors" title="ลบหมวดหมู่นี้">
+                            🗑️
+                        </button>
+                        <div class="flex-1 min-w-0">
+                            <span class="text-xs font-semibold text-slate-200 block truncate">${labelEsc}</span>
+                            <span class="text-[10px] text-slate-400 font-medium">งบวางแผน: ฿${exp.estimate.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-slate-400 shrink-0">จ่ายจริง:</span>
+                        <div class="relative w-28">
+                            <span class="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">฿</span>
+                            <input type="number" 
+                                   value="${exp.actual || ''}" 
+                                   placeholder="0" 
+                                   oninput="updateExpenseActual(${idx}, this.value)" 
+                                   class="w-full bg-slate-950 text-slate-100 text-xs font-semibold text-right rounded-lg border border-slate-700 py-1.5 pl-6 pr-2.5 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                        </div>
+                    </div>
+                `;
+                expensesContainer.appendChild(itemEl);
+            });
+
+            // Update Region Checklist
+            const provinceChecklist = document.getElementById("tripProvincesChecklist");
+            provinceChecklist.innerHTML = "";
+
+            if (provinceMapLayout === 'grid') {
+                // Style container as a Cartogram grid of Thailand
+                provinceChecklist.className = "grid grid-cols-10 gap-1 p-2 bg-slate-950/60 rounded-2xl border border-slate-800/80 overflow-x-auto min-w-[320px]";
+                
+                Object.keys(provinceTileConfig).forEach(prov => {
+                    const config = provinceTileConfig[prov];
+                    const isVisited = globalVisitedProvinces.includes(prov);
+                    
+                    // Filter check: If "Trip Only" is active, dim non-active provinces instead of hiding them
+                    const isInActiveTrip = provinceFilter === 'all' || (activeTripData.provincesList && activeTripData.provincesList.includes(prov));
+
+                    const tileBtn = document.createElement("button");
+                    tileBtn.onclick = () => toggleProvinceConquered(prov);
+                    tileBtn.style.gridRow = config.r;
+                    tileBtn.style.gridColumn = config.c;
+                    
+                    // Style states
+                    let bgClass = "bg-slate-800/30 text-slate-500 border-slate-800";
+                    if (isVisited) {
+                        bgClass = "bg-amber-500 text-slate-950 border-amber-400 font-bold shadow-md shadow-amber-500/10";
+                    }
+                    
+                    // Opacity control depending on trip filter
+                    let opacityClass = "opacity-100";
+                    if (!isInActiveTrip) {
+                        opacityClass = "opacity-20 pointer-events-none"; // faded out and disabled
+                    }
+
+                    // Safe Escape HTML parameters
+                    const abbrEsc = escapeHtml(config.abbr);
+                    const provNameEsc = escapeHtml(prov);
+
+                    tileBtn.className = `flex flex-col items-center justify-center aspect-square rounded-lg border text-[8px] transition-all p-0.5 ${bgClass} ${opacityClass} hover:scale-105 active:scale-95`;
+                    tileBtn.innerHTML = `
+                        <span class="text-[10px] uppercase tracking-tighter leading-none font-bold">${abbrEsc}</span>
+                        <span class="text-[5.5px] opacity-75 leading-none mt-0.5 truncate max-w-full">${provNameEsc}</span>
+                    `;
+                    provinceChecklist.appendChild(tileBtn);
+                });
+            } else {
+                // Render original list layout
+                provinceChecklist.className = "grid grid-cols-2 gap-2 max-h-[300px] overflow-y-auto pr-1 no-scrollbar";
+                
+                let displayProvinces = [];
+                if (provinceFilter === 'trip') {
+                    displayProvinces = activeTripData.provincesList || [];
+                } else {
+                    const searchVal = document.getElementById("provinceSearchInput").value.trim().toLowerCase();
+                    displayProvinces = allProvincesList.filter(prov => prov.toLowerCase().includes(searchVal));
+                }
+
+                displayProvinces.forEach(prov => {
+                    const isVisited = globalVisitedProvinces.includes(prov);
+                    const blockEl = document.createElement("button");
+                    blockEl.onclick = () => toggleProvinceConquered(prov);
+                    blockEl.className = `p-3 rounded-xl border text-xs font-semibold flex items-center justify-between text-left transition-all ${isVisited ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 shadow-sm' : 'bg-slate-800 text-slate-400 border-slate-700/60'}`;
+                    
+                    const provNameEsc = escapeHtml(prov);
+                    const statusText = isVisited ? '🎉 พิชิตแล้ว' : 'ยังไม่ผ่าน';
+
+                    blockEl.innerHTML = `
+                        <span>📍 ${provNameEsc}</span>
+                        <span class="text-[10px]">${statusText}</span>
+                    `;
+                    provinceChecklist.appendChild(blockEl);
+                });
+            }
+        }
+
+        // -------------------------------------------------------------
+        // EDIT ACTIVE STOP MODAL INTERACTION
+        // -------------------------------------------------------------
+        function openEditStopModal(index) {
+            const stop = activeTripData.stops[index];
+            if (!stop) return;
+
+            document.getElementById("editStopTargetIndex").value = index;
+            document.getElementById("editStopProv").value = stop.prov || "";
+            document.getElementById("editStopPlace").value = stop.place || "";
+            document.getElementById("editStopKm").value = stop.km || 0;
+            document.getElementById("editStopDep").value = stop.est_dep || "";
+
+            // Use safe textContent property instead of raw html to prevent prompt exploits
+            document.getElementById("editStopModalTitle").textContent = `✏️ แก้ไขจุดที่ ${index + 1}: ${stop.place}`;
+            document.getElementById("editStopModal").classList.remove("hidden");
+        }
+
+        function closeEditStopModal() {
+            document.getElementById("editStopModal").classList.add("hidden");
+        }
+
+        function saveActiveStopEdit() {
+            const index = parseInt(document.getElementById("editStopTargetIndex").value);
+            const prov = document.getElementById("editStopProv").value;
+            const place = document.getElementById("editStopPlace").value.trim();
+            const km = Number(document.getElementById("editStopKm").value) || 0;
+            const dep = document.getElementById("editStopDep").value.trim();
+
+            if (!prov || !place) {
+                showToast("⚠️ กรุณากรอกจังหวัดและชื่อสถานที่!");
+                return;
+            }
+
+            // Sync values in memory
+            activeTripData.stops[index].prov = prov;
+            activeTripData.stops[index].place = place;
+            activeTripData.stops[index].km = km;
+            activeTripData.stops[index].est_dep = dep;
+
+            // Rebuild Provinces summary string
+            rebuildProvincesSummary();
+
+            closeEditStopModal();
+            saveState();
+            renderApp();
+            calculateTotals();
+            showToast("💾 บันทึกการแก้ไขจุดแวะเรียบร้อย!");
+        }
+
+        function executeActiveStopDeletion() {
+            const index = parseInt(document.getElementById("editStopTargetIndex").value);
+            if (activeTripData.stops.length <= 1) {
+                showToast("❌ ทริปนี้จะต้องมีจุดแวะเหลืออยู่อย่างน้อย 1 จุด!");
+                return;
+            }
+
+            const removedName = activeTripData.stops[index].place;
+            activeTripData.stops.splice(index, 1);
+
+            // Re-index stops sequential IDs
+            activeTripData.stops.forEach((s, idx) => {
+                s.id = idx + 1;
+            });
+
+            rebuildProvincesSummary();
+
+            closeEditStopModal();
+            saveState();
+            renderApp();
+            calculateTotals();
+            showToast(`🗑️ ลบจุดแวะ "${escapeHtml(removedName)}" ออกแล้ว!`);
+        }
+
+        // -------------------------------------------------------------
+        // INSERT STOP ON-THE-GO INTERACTION
+        // -------------------------------------------------------------
+        function openAddStopOnTheGoModal(insertIndex) {
+            document.getElementById("addStopInsertIndex").value = insertIndex;
+            document.getElementById("addStopOnTheGoProv").value = "";
+            document.getElementById("addStopOnTheGoPlace").value = "";
+            document.getElementById("addStopOnTheGoKm").value = "";
+            document.getElementById("addStopOnTheGoDep").value = "";
+
+            document.getElementById("addStopOnTheGoModal").classList.remove("hidden");
+        }
+
+        function closeAddStopOnTheGoModal() {
+            document.getElementById("addStopOnTheGoModal").classList.add("hidden");
+        }
+
+        function executeStopInsertion() {
+            const insertIndex = parseInt(document.getElementById("addStopInsertIndex").value);
+            const prov = document.getElementById("addStopOnTheGoProv").value;
+            const place = document.getElementById("addStopOnTheGoPlace").value.trim();
+            const km = Number(document.getElementById("addStopOnTheGoKm").value) || 0;
+            const dep = document.getElementById("addStopOnTheGoDep").value.trim();
+
+            if (!prov || !place) {
+                showToast("⚠️ กรุณาเลือกจังหวัดและระบุสถานที่แวะ!");
+                return;
+            }
+
+            const newStopSchema = {
+                id: Date.now(), // Unique ID, will be sequential re-indexed
+                prov: prov,
+                place: place,
+                km: km,
+                dur: "ประมาณการ",
+                est_arr: "---",
+                est_dep: dep || "---",
+                actual_arr: null,
+                checkIn: false
+            };
+
+            // Splice into array structure
+            activeTripData.stops.splice(insertIndex, 0, newStopSchema);
+
+            // Re-index
+            activeTripData.stops.forEach((s, idx) => {
+                s.id = idx + 1;
+            });
+
+            // Sync with conquest checklist
+            if (!globalVisitedProvinces.includes(prov)) {
+                globalVisitedProvinces.push(prov);
+            }
+
+            rebuildProvincesSummary();
+
+            closeAddStopOnTheGoModal();
+            saveState();
+            renderApp();
+            calculateTotals();
+            showToast(`🎉 เพิ่มจุดแวะด่วน "${escapeHtml(place)}" เรียบร้อยแล้ว!`);
+        }
+
+        // Helper to update the card overview banner dynamically
+        function rebuildProvincesSummary() {
+            const provs = [];
+            activeTripData.stops.forEach(s => {
+                if (s.prov && !provs.includes(s.prov)) {
+                    provs.push(s.prov);
+                }
+            });
+            activeTripData.provinces = provs.join(" - ");
+            activeTripData.provincesList = provs;
+        }
+
+        // Helper to parse time string reliably (handles crossed midnight parentheses too)
+        function parseTime(timeStr) {
+            if (!timeStr || !timeStr.includes(":")) return { h: 4, m: 0 };
+            const cleanTime = timeStr.replace(/\(.*?\)/g, "").trim();
+            const parts = cleanTime.split(":");
+            return {
+                h: parseInt(parts[0]) || 0,
+                m: parseInt(parts[1]) || 0
+            };
+        }
+
+        // Helper to format time with crossing days offset
+        function formatTime(hours, minutes, daysOffset) {
+            const finalH = hours % 24;
+            const finalM = minutes;
+            const dayLabel = daysOffset > 0 ? `(วันถัดไป) ` : "";
+            return `${dayLabel}${String(finalH).padStart(2, '0')}:${String(finalM).padStart(2, '0')}`;
+        }
+
+        // Helper to Geocode place using Photon API (extremely fast, generous limits, keyless)
+        async function geocodePlace(place, prov) {
+            const query = encodeURIComponent(`${place} ${prov} ประเทศไทย`);
+            const geoUrl = `https://photon.komoot.io/api/?q=${query}&limit=1`;
+            try {
+                const response = await fetch(geoUrl);
+                const data = await response.json();
+                if (data && data.features && data.features.length > 0) {
+                    const coord = data.features[0].geometry.coordinates; // [lon, lat]
+                    return { lat: coord[1], lon: coord[0] };
+                } else {
+                    // Fallback to general province coordinates
+                    const fallbackQuery = encodeURIComponent(`${prov} ประเทศไทย`);
+                    const fallbackUrl = `https://photon.komoot.io/api/?q=${fallbackQuery}&limit=1`;
+                    const fbResponse = await fetch(fallbackUrl);
+                    const fbData = await fbResponse.json();
+                    if (fbData && fbData.features && fbData.features.length > 0) {
+                        const coord = fbData.features[0].geometry.coordinates;
+                        return { lat: coord[1], lon: coord[0] };
+                    }
+                }
+            } catch (err) {
+                console.error("Geocoding error:", err);
+            }
+            return null;
+        }
+
+        // Safe Geocoding wrapper that implements Photon Delay Rate Limiter sequential fetching
+        async function geocodeWithDelay(place, prov, delayMs = 300) {
+            if (delayMs > 0) {
+                await new Promise(r => setTimeout(r, delayMs));
+            }
+            return geocodePlace(place, prov);
+        }
+
+        // -------------------------------------------------------------
+        // ON-THE-GO ROUTING RECALCULATION ENGINE
+        // -------------------------------------------------------------
+        async function recalculateActiveTripOnTheGo() {
+            if (activeTripData.stops.length < 2) {
+                showToast("❌ ต้องมีจุดแวะอย่างน้อย 2 จุดในการยิงคำนวณเส้นทาง!");
+                return;
+            }
+
+            showToast("🛰️ กำลังยิงพิกัดอัปเดตระยะทางและเวลาทริปใหม่...");
+
+            const selectedEngine = localStorage.getItem('roadtrip_engine') || 'osrm';
+            const gmapsKey = localStorage.getItem('roadtrip_gmaps_key') || '';
+
+            try {
+                const placesList = activeTripData.stops.map((s, idx) => ({
+                    prov: s.prov,
+                    place: s.place,
+                    index: idx
+                }));
+
+                if (selectedEngine === 'gmaps' && gmapsKey) {
+                    await calculateActiveWithGoogleMaps(placesList, gmapsKey);
+                } else {
+                    await calculateActiveWithOSRM(placesList);
+                }
+
+                saveState();
+                renderApp();
+                calculateTotals();
+
+            } catch (error) {
+                console.error(error);
+                showToast(`❌ เกิดข้อผิดพลาดในการคำนวณ: ${error.message}`);
+            }
+        }
+
+        // Active OSRM Route Runner using Photon + OSRM with delay sequential geocoding
+        async function calculateActiveWithOSRM(placesList) {
+            const coordinates = [];
+
+            // 1. Geocode with Photon API (with sequential rate limit delay compliant wrapper)
+            for (let i = 0; i < placesList.length; i++) {
+                const item = placesList[i];
+                // Delay 300ms starting from second item to protect Photon rate limit bounds
+                const coords = await geocodeWithDelay(item.place, item.prov, i === 0 ? 0 : 300);
+                if (coords) {
+                    coordinates.push(coords);
+                } else {
+                    throw new Error(`ไม่พบพิกัดจุด: ${item.place} ${item.prov}`);
+                }
+            }
+
+            // 2. Routing Time engine calculation with crossed-midnight handling
+            const startNodeTime = parseTime(activeTripData.stops[0].est_dep);
+            let currentHour = startNodeTime.h;
+            let currentMinute = startNodeTime.m;
+            let daysOffset = 0;
+
+            for (let i = 1; i < coordinates.length; i++) {
+                const startNode = coordinates[i-1];
+                const endNode = coordinates[i];
+
+                const routeUrl = `https://router.project-osrm.org/route/v1/driving/${startNode.lon},${startNode.lat};${endNode.lon},${endNode.lat}?overview=false`;
+                const response = await fetch(routeUrl);
+                const routeData = await response.json();
+
+                if (routeData.routes && routeData.routes.length > 0) {
+                    const mainRoute = routeData.routes[0];
+                    const kmVal = parseFloat((mainRoute.distance / 1000).toFixed(1));
+                    const durSecs = mainRoute.duration;
+
+                    activeTripData.stops[i].km = kmVal;
+
+                    const durHrs = Math.floor(durSecs / 3600);
+                    const durMins = Math.round((durSecs % 3600) / 60);
+
+                    // Calc arrival
+                    currentMinute += durMins;
+                    currentHour += durHrs;
+                    if (currentMinute >= 60) {
+                        currentHour += Math.floor(currentMinute / 60);
+                        currentMinute = currentMinute % 60;
+                    }
+                    if (currentHour >= 24) {
+                        daysOffset += Math.floor(currentHour / 24);
+                        currentHour = currentHour % 24;
+                    }
+
+                    activeTripData.stops[i].est_arr = formatTime(currentHour, currentMinute, daysOffset);
+                    activeTripData.stops[i].dur = `${durHrs} ชม. ${durMins} นาที`;
+
+                    // Next departure default add 45 minutes stay
+                    currentMinute += 45; 
+                    if (currentMinute >= 60) {
+                        currentHour += Math.floor(currentMinute / 60);
+                        currentMinute = currentMinute % 60;
+                    }
+                    if (currentHour >= 24) {
+                        daysOffset += Math.floor(currentHour / 24);
+                        currentHour = currentHour % 24;
+                    }
+
+                    // Only overwrite departure if it's currently un-filled or default
+                    if (!activeTripData.stops[i].est_dep || activeTripData.stops[i].est_dep === "---") {
+                        activeTripData.stops[i].est_dep = formatTime(currentHour, currentMinute, daysOffset);
+                    }
+                }
+            }
+            showToast("✨ อัปเดตตารางเวลา และระยะทาง OSRM สำเร็จ!");
+        }
+
+        // Active Google Maps Route Runner with CORS Try-Catch fallback advising warning modal
+        async function calculateActiveWithGoogleMaps(placesList, apiKey) {
+            const originList = placesList.map(item => `${item.place}, ${item.prov}, Thailand`);
+            
+            const startNodeTime = parseTime(activeTripData.stops[0].est_dep);
+            let currentHour = startNodeTime.h;
+            let currentMinute = startNodeTime.m;
+            let daysOffset = 0;
+
+            try {
+                for (let i = 1; i < originList.length; i++) {
+                    const origin = encodeURIComponent(originList[i-1]);
+                    const destination = encodeURIComponent(originList[i]);
+                    
+                    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${apiKey}`;
+                    
+                    // Directly calling GMaps matrix from Browser will usually trigger CORS-block unless a browser proxy bypass is active
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (data.status === "OK" && data.rows[0].elements[0].status === "OK") {
+                        const element = data.rows[0].elements[0];
+                        const kmVal = parseFloat((element.distance.value / 1000).toFixed(1));
+                        const durSecs = element.duration.value;
+
+                        activeTripData.stops[i].km = kmVal;
+
+                        const durHrs = Math.floor(durSecs / 3600);
+                        const durMins = Math.round((durSecs % 3600) / 60);
+
+                        // Add travel duration
+                        currentMinute += durMins;
+                        currentHour += durHrs;
+                        if (currentMinute >= 60) {
+                            currentHour += Math.floor(currentMinute / 60);
+                            currentMinute = currentMinute % 60;
+                        }
+                        if (currentHour >= 24) {
+                            daysOffset += Math.floor(currentHour / 24);
+                            currentHour = currentHour % 24;
+                        }
+
+                        activeTripData.stops[i].est_arr = formatTime(currentHour, currentMinute, daysOffset);
+                        activeTripData.stops[i].dur = `${durHrs} ชม. ${durMins} นาที`;
+
+                        // Add stay minutes (45 min)
+                        currentMinute += 45; 
+                        if (currentMinute >= 60) {
+                            currentHour += Math.floor(currentMinute / 60);
+                            currentMinute = currentMinute % 60;
+                        }
+                        if (currentHour >= 24) {
+                            daysOffset += Math.floor(currentHour / 24);
+                            currentHour = currentHour % 24;
+                        }
+
+                        if (!activeTripData.stops[i].est_dep || activeTripData.stops[i].est_dep === "---") {
+                            activeTripData.stops[i].est_dep = formatTime(currentHour, currentMinute, daysOffset);
+                        }
+                    } else {
+                        throw new Error("Google Maps matrix calculation error");
+                    }
+                }
+                showToast("👑 อัปเดตตารางเวลา Google Maps Premium สำเร็จ!");
+            } catch (e) {
+                console.error("CORS Matrix API block catch: ", e);
+                showToast("⚠️ ไม่สามารถรัน Google Maps ในโหมดตรงได้เนื่องจากติด CORS บล็อก แนะนำให้สลับใช้ OSRM (ฟรี) ในหน้าตั้งค่า ⚙️");
+            }
+        }
+
+        function triggerCheckIn(stopId) {
+            const stop = activeTripData.stops.find(s => s.id === stopId);
+            if (!stop) return;
+
+            if (!stop.checkIn) {
+                const now = new Date();
+                const hh = String(now.getHours()).padStart(2, '0');
+                const mm = String(now.getMinutes()).padStart(2, '0');
+                stop.actual_arr = `${hh}:${mm}`;
+                stop.checkIn = true;
+                
+                if (!globalVisitedProvinces.includes(stop.prov)) {
+                    globalVisitedProvinces.push(stop.prov);
+                }
+                showToast(`เช็กอินแล้ว! ⏱️ บันทึกเวลาถึงคือ ${stop.actual_arr} น.`);
+            } else {
+                stop.checkIn = false;
+                stop.actual_arr = null;
+                
+                // Smart clean-up province list: remove from global map only if no other checked-in stops are in that province
+                const otherCheckedStopsInProv = activeTripData.stops.some(s => s.prov === stop.prov && s.checkIn && s.id !== stop.id);
+                if (!otherCheckedStopsInProv) {
+                    const pIdx = globalVisitedProvinces.indexOf(stop.prov);
+                    if (pIdx > -1) {
+                        globalVisitedProvinces.splice(pIdx, 1);
+                    }
+                }
+                showToast("ยกเลิกการเช็กอินแล้ว");
+            }
+
+            saveState();
+            renderApp();
+            calculateTotals();
+        }
+
+        function updateExpenseActual(index, val) {
+            if (!activeTripData.expenses) activeTripData.expenses = [];
+            activeTripData.expenses[index].actual = Number(val) || 0;
+            saveState();
+            calculateTotals();
+        }
+
+        function toggleProvinceConquered(prov) {
+            const idx = globalVisitedProvinces.indexOf(prov);
+            if (idx > -1) {
+                globalVisitedProvinces.splice(idx, 1);
+                showToast(`เอา ${escapeHtml(prov)} ออกจากทำเนียบแล้ว`);
+            } else {
+                globalVisitedProvinces.push(prov);
+                showToast(`🎉 ยินดีด้วย! คุณพิชิตจังหวัด ${escapeHtml(prov)} แล้ว!`);
+            }
+            saveState();
+            renderApp();
+            calculateTotals();
+        }
+
+        // --- RESTORED & UPGRADED TAB SWITCHING FUNCTION ---
+        function switchTab(tabId) {
+            // Hide all tab screens
+            document.getElementById("tabTimeline").classList.add("hidden");
+            document.getElementById("tabExpenses").classList.add("hidden");
+            document.getElementById("tabSummary").classList.add("hidden");
+            document.getElementById("tabMap").classList.add("hidden");
+
+            // Reset navigation bar colors to inactive slate state
+            document.getElementById("navTimeline").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400";
+            document.getElementById("navExpenses").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400";
+            document.getElementById("navSummary").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400";
+            document.getElementById("navMap").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-slate-400";
+
+            // Show current active selected tab and highlight its button with amber
+            if (tabId === "timeline") {
+                document.getElementById("tabTimeline").classList.remove("hidden");
+                document.getElementById("navTimeline").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
+            } else if (tabId === "expenses") {
+                document.getElementById("tabExpenses").classList.remove("hidden");
+                document.getElementById("navExpenses").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
+            } else if (tabId === "summary") {
+                document.getElementById("tabSummary").classList.remove("hidden");
+                document.getElementById("navSummary").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
+                renderSummaryTab(); // Load All trips dashboard dynamically
+            } else if (tabId === "map") {
+                document.getElementById("tabMap").classList.remove("hidden");
+                document.getElementById("navMap").className = "flex flex-col items-center space-y-1 transition-colors duration-200 text-amber-400";
+            }
+        }
+
+        // -------------------------------------------------------------
+        // NEW FEATURE: ALL TRIPS SUMMARY TAB RENDERING LOGIC
+        // -------------------------------------------------------------
+        function renderSummaryTab() {
+            loadTripsDatabase(); // Refresh registry
+
+            let totalTrips = 0;
+            let totalDistance = 0;
+            let totalEstimate = 0;
+            let totalActual = 0;
+            let totalStops = 0;
+            let totalCheckIns = 0;
+
+            const container = document.getElementById("summaryTripsList");
+            container.innerHTML = "";
+
+            Object.keys(allRoadTrips).forEach(key => {
+                totalTrips++;
+                let trip = null;
+
+                // Recover saved state or load default preset
+                const savedState = localStorage.getItem(`trip_state_${key}`);
+                if (savedState) {
+                    trip = JSON.parse(savedState);
+                } else {
+                    trip = JSON.parse(JSON.stringify(allRoadTrips[key]));
+                }
+
+                // Cumulative metrics inside this loop
+                const distance = trip.stops.reduce((sum, s) => sum + (s.km || 0), 0);
+                const stopsCount = trip.stops.length;
+                const checkedCount = trip.stops.filter(s => s.checkIn).length;
+
+                let estimate = 0;
+                let actual = 0;
+                if (trip.expenses) {
+                    trip.expenses.forEach(e => {
+                        estimate += Number(e.estimate) || 0;
+                        actual += Number(e.actual) || 0;
+                    });
+                }
+
+                totalDistance += distance;
+                totalEstimate += estimate;
+                totalActual += actual;
+                totalStops += stopsCount;
+                totalCheckIns += checkedCount;
+
+                const pct = estimate > 0 ? Math.min((actual / estimate) * 100, 100) : 0;
+
+                // Safe XSS escape variables inside cards summary
+                const titleEsc = escapeHtml(trip.title);
+                const provincesEsc = escapeHtml(trip.provinces);
+
+                // Render dynamic card
+                const card = document.createElement("div");
+                card.className = "bg-slate-800 p-4 rounded-xl border border-slate-700/60 shadow-md space-y-3";
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0 pr-2">
+                            <h4 class="text-sm font-bold text-slate-100 truncate">${titleEsc}</h4>
+                            <span class="text-[10px] text-slate-400 truncate block mt-0.5">📍 ${provincesEsc}</span>
+                        </div>
+                        <span class="text-[11px] font-semibold text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20 shrink-0 whitespace-nowrap">
+                            ${distance.toLocaleString()} กม.
+                        </span>
+                    </div>
+
+                    <!-- Progress bar for budget inside the trip -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[10px] text-slate-400">
+                            <span>จ่ายจริง: ฿${actual.toLocaleString()} / ฿${estimate.toLocaleString()}</span>
+                            <span class="${actual > estimate ? 'text-rose-400' : 'text-emerald-400'}">${Math.round(pct)}%</span>
+                        </div>
+                        <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+                            <div class="h-full rounded-full ${actual > estimate ? 'bg-rose-500' : 'bg-gradient-to-r from-emerald-500 to-amber-500'}" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Footnote checks and trigger switch button -->
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-700/40 text-[10.5px]">
+                        <span class="text-slate-400 font-medium">📍 เช็กอินแล้ว ${checkedCount} / ${stopsCount} จุดแวะ</span>
+                        <button onclick="selectAndGoToTrip('${escapeHtml(key)}')" class="text-[10.5px] font-bold text-slate-950 bg-amber-500 hover:bg-amber-400 py-1 px-2.5 rounded-lg shadow-sm transition-all">
+                            ⚡ สลับมาดูทริปนี้
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            // Write totals variables to general view metrics
+            document.getElementById("allTripsCount").innerText = `${totalTrips} ทริป`;
+            document.getElementById("allTripsDistance").innerText = `${totalDistance.toLocaleString()} กม.`;
+            document.getElementById("allTripsEstimate").innerText = `฿${totalEstimate.toLocaleString()}`;
+            document.getElementById("allTripsActual").innerText = `฿${totalActual.toLocaleString()}`;
+
+            const overallSaving = totalEstimate - totalActual;
+            const savingTextEl = document.getElementById("allTripsSavingText");
+            if (overallSaving >= 0) {
+                savingTextEl.innerText = `ประหยัดรวม: ฿${overallSaving.toLocaleString()}`;
+                savingTextEl.className = "text-emerald-400 font-semibold";
+            } else {
+                savingTextEl.innerText = `บานปลายรวม: ฿${Math.abs(overallSaving).toLocaleString()}`;
+                savingTextEl.className = "text-rose-400 font-semibold";
+            }
+
+            const overallPct = totalEstimate > 0 ? Math.min((totalActual / totalEstimate) * 100, 100) : 0;
+            document.getElementById("allTripsProgressBar").style.width = `${overallPct}%`;
+            
+            if (totalActual > totalEstimate) {
+                document.getElementById("allTripsProgressBar").classList.remove("from-emerald-500", "to-amber-500");
+                document.getElementById("allTripsProgressBar").classList.add("bg-rose-500");
+            } else {
+                document.getElementById("allTripsProgressBar").classList.add("from-emerald-500", "to-amber-500");
+                document.getElementById("allTripsProgressBar").classList.remove("bg-rose-500");
+            }
+
+            document.getElementById("allTripsCheckinProgressText").innerText = `เช็กอินแล้ว ${totalCheckIns} / ${totalStops} จุดแวะ`;
+            document.getElementById("allTripsUsagePctText").innerText = `ใช้งบสะสม ${Math.round(overallPct)}%`;
+        }
+
+        // Fast shortcut selection from summary cards
+        function selectAndGoToTrip(key) {
+            const selector = document.getElementById("routeSelector");
+            selector.value = key;
+            switchRoute(key); // trigger core state load
+            switchTab('timeline'); // switch focus to main timeline view
+            showToast(`📂 สลับหน้าจอมาที่ทริป "${escapeHtml(activeTripData.title)}" แล้ว!`);
+        }
+
+        // Settings Modal handling
+        function openSettingsModal() {
+            document.getElementById("settingsModal").classList.remove("hidden");
+        }
+        function closeSettingsModal() {
+            document.getElementById("settingsModal").classList.add("hidden");
+        }
+        function toggleApiKeyField() {
+            const val = document.getElementById("settingEngineChoice").value;
+            const keyField = document.getElementById("apiKeyFieldContainer");
+            if (val === 'gmaps') {
+                keyField.classList.remove("hidden");
+            } else {
+                keyField.classList.add("hidden");
+            }
+        }
+        function saveSettings() {
+            const engine = document.getElementById("settingEngineChoice").value;
+            const key = document.getElementById("settingApiKey").value.trim();
+
+            if (engine === 'gmaps' && !key) {
+                showToast("⚠️ กรุณากรอก API Key หากเลือกใช้งาน Google Maps");
+                return;
+            }
+
+            localStorage.setItem('roadtrip_engine', engine);
+            localStorage.setItem('roadtrip_gmaps_key', key);
+            closeSettingsModal();
+            showToast("💾 บันทึกการตั้งค่าแผนที่เรียบร้อย!");
+        }
+
+        // Clear key securely from memory and browser local storage
+        function clearApiKey() {
+            document.getElementById("settingApiKey").value = "";
+            localStorage.removeItem('roadtrip_gmaps_key');
+            showToast("🗑️ ล้าง Google Maps API Key ออกจากหน่วยความจำเรียบร้อย!");
+        }
+
+        // ACTIVE EXPENSE DYNAMIC MANAGEMENT
+        function openAddActiveExpenseModal() {
+            document.getElementById("addActiveExpenseModal").classList.remove("hidden");
+            document.getElementById("activeExpLabel").value = "";
+            document.getElementById("activeExpEstimate").value = "";
+        }
+
+        function closeAddActiveExpenseModal() {
+            document.getElementById("addActiveExpenseModal").classList.add("hidden");
+        }
+
+        function saveActiveExpenseItem() {
+            const label = document.getElementById("activeExpLabel").value.trim();
+            const est = Number(document.getElementById("activeExpEstimate").value) || 0;
+
+            if (!label) {
+                showToast("⚠️ กรุณากรอกชื่อหมวดหมู่ให้เรียบร้อย!");
+                return;
+            }
+
+            if (!activeTripData.expenses) activeTripData.expenses = [];
+
+            activeTripData.expenses.push({
+                category: "custom",
+                label: label,
+                estimate: est,
+                actual: 0
+            });
+
+            saveState();
+            renderApp();
+            calculateTotals();
+            closeAddActiveExpenseModal();
+            showToast(`💸 เพิ่มหมวดงบหมู่ "${escapeHtml(label)}" สำเร็จแล้ว!`);
+        }
+
+        function deleteExpenseItem(index) {
+            if (!activeTripData.expenses) return;
+            const label = activeTripData.expenses[index].label;
+            activeTripData.expenses.splice(index, 1);
+            saveState();
+            renderApp();
+            calculateTotals();
+            showToast(`🗑️ ลบหมวดหมู่ "${escapeHtml(label)}" ออกแล้ว`);
+        }
+
+        // AUTO-CALCULATE ROUTE LOGIC FOR TRIP CREATION (using delays for photon geocoding)
+        async function autoCalculateRouteData() {
+            const stopRows = document.querySelectorAll("#newStopsContainer > div");
+            if (stopRows.length < 2) {
+                showToast("❌ ต้องมีจุดแวะอย่างน้อย 2 จุดในการหาเส้นทาง!");
+                return;
+            }
+
+            const calcBtn = document.getElementById("btnAutoCalcRoute");
+            const originalText = calcBtn.innerHTML;
+            calcBtn.innerHTML = `🌀 ค้นหาแผนที่...`;
+            calcBtn.disabled = true;
+
+            const selectedEngine = localStorage.getItem('roadtrip_engine') || 'osrm';
+            const gmapsKey = localStorage.getItem('roadtrip_gmaps_key') || '';
+
+            try {
+                const placesList = [];
+                for (let i = 0; i < stopRows.length; i++) {
+                    const row = stopRows[i];
+                    const provVal = row.querySelector(".stop-prov").value;
+                    const placeVal = row.querySelector(".stop-place").value.trim();
+
+                    if (!provVal || !placeVal) {
+                        showToast("⚠️ กรุณาเลือกจังหวัดและกรอกสถานที่ให้ครบทุกจุดก่อนคำนวณ");
+                        calcBtn.innerHTML = originalText;
+                        calcBtn.disabled = false;
+                        return;
+                    }
+                    placesList.push({ prov: provVal, place: placeVal, index: i });
+                }
+
+                showToast("🛰️ กำลังยิงพิกัด GPS แผนที่ประเทศไทย...");
+
+                if (selectedEngine === 'gmaps' && gmapsKey) {
+                    await calculateWithGoogleMaps(placesList, stopRows, gmapsKey);
+                } else {
+                    await calculateWithOSRM(placesList, stopRows);
+                }
+
+            } catch (error) {
+                console.error(error);
+                showToast(`❌ ข้อผิดพลาดในการโหลดแผนที่: ${error.message}`);
+            } finally {
+                calcBtn.innerHTML = originalText;
+                calcBtn.disabled = false;
+            }
+        }
+
+        // Engine 1: OSRM using Photon Geocoder with compliance rate limits delays
+        async function calculateWithOSRM(placesList, stopRows) {
+            const coordinates = [];
+
+            for (let i = 0; i < placesList.length; i++) {
+                const item = placesList[i];
+                // Delay 300ms starting from second item to protect Photon rate limit bounds
+                const coords = await geocodeWithDelay(item.place, item.prov, i === 0 ? 0 : 300);
+                if (coords) {
+                    coordinates.push(coords);
+                } else {
+                    throw new Error(`ไม่พบพิกัดจุดที่ ${i+1}: ${item.place} ${item.prov}`);
+                }
+            }
+
+            const startTime = parseTime(stopRows[0].querySelector(".stop-dep").value);
+            let currentHour = startTime.h;
+            let currentMinute = startTime.m;
+            let daysOffset = 0;
+
+            for (let i = 1; i < coordinates.length; i++) {
+                const startNode = coordinates[i-1];
+                const endNode = coordinates[i];
+
+                const routeUrl = `https://router.project-osrm.org/route/v1/driving/${startNode.lon},${startNode.lat};${endNode.lon},${endNode.lat}?overview=false`;
+                const response = await fetch(routeUrl);
+                const routeData = await response.json();
+
+                if (routeData.routes && routeData.routes.length > 0) {
+                    const mainRoute = routeData.routes[0];
+                    const kmVal = parseFloat((mainRoute.distance / 1000).toFixed(1));
+                    const durSecs = mainRoute.duration;
+
+                    stopRows[i].querySelector(".stop-km").value = kmVal;
+
+                    const durHrs = Math.floor(durSecs / 3600);
+                    const durMins = Math.round((durSecs % 3600) / 60);
+
+                    // Add travel duration
+                    currentMinute += durMins;
+                    currentHour += durHrs;
+                    if (currentMinute >= 60) {
+                        currentHour += Math.floor(currentMinute / 60);
+                        currentMinute = currentMinute % 60;
+                    }
+                    if (currentHour >= 24) {
+                        daysOffset += Math.floor(currentHour / 24);
+                        currentHour = currentHour % 24;
+                    }
+
+                    // Pre-fill default 45 mins stay
+                    currentMinute += 45; 
+                    if (currentMinute >= 60) {
+                        currentHour += Math.floor(currentMinute / 60);
+                        currentMinute = currentMinute % 60;
+                    }
+                    if (currentHour >= 24) {
+                        daysOffset += Math.floor(currentHour / 24);
+                        currentHour = currentHour % 24;
+                    }
+
+                    const nextDep = formatTime(currentHour, currentMinute, daysOffset);
+                    stopRows[i].querySelector(".stop-dep").value = nextDep;
+                }
+            }
+            showToast("✨ ดึงระยะทาง & ปรับเวลาเรียบร้อย!");
+        }
+
+        async function calculateWithGoogleMaps(placesList, stopRows, apiKey) {
+            const originList = [];
+            for (let i = 0; i < placesList.length; i++) {
+                originList.push(`${placesList[i].place}, ${placesList[i].prov}, Thailand`);
+            }
+
+            const startTime = parseTime(stopRows[0].querySelector(".stop-dep").value);
+            let currentHour = startTime.h;
+            let currentMinute = startTime.m;
+            let daysOffset = 0;
+
+            try {
+                for (let i = 1; i < originList.length; i++) {
+                    const origin = encodeURIComponent(originList[i-1]);
+                    const destination = encodeURIComponent(originList[i]);
+                    
+                    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${origin}&destinations=${destination}&key=${apiKey}`;
+                    
+                    const res = await fetch(url);
+                    const data = await res.json();
+
+                    if (data.status === "OK" && data.rows[0].elements[0].status === "OK") {
+                        const element = data.rows[0].elements[0];
+                        const kmVal = parseFloat((element.distance.value / 1000).toFixed(1));
+                        const durSecs = element.duration.value;
+
+                        stopRows[i].querySelector(".stop-km").value = kmVal;
+
+                        const durHrs = Math.floor(durSecs / 3600);
+                        const durMins = Math.round((durSecs % 3600) / 60);
+
+                        // Add travel duration
+                        currentMinute += durMins;
+                        currentHour += durHrs;
+                        if (currentMinute >= 60) {
+                            currentHour += Math.floor(currentMinute / 60);
+                            currentMinute = currentMinute % 60;
+                        }
+                        if (currentHour >= 24) {
+                            daysOffset += Math.floor(currentHour / 24);
+                            currentHour = currentHour % 24;
+                        }
+
+                        // Add 45 min stay
+                        currentMinute += 45; 
+                        if (currentMinute >= 60) {
+                            currentHour += Math.floor(currentMinute / 60);
+                            currentMinute = currentMinute % 60;
+                        }
+                        if (currentHour >= 24) {
+                            daysOffset += Math.floor(currentHour / 24);
+                            currentHour = currentHour % 24;
+                        }
+
+                        const nextDep = formatTime(currentHour, currentMinute, daysOffset);
+                        stopRows[i].querySelector(".stop-dep").value = nextDep;
+                    } else {
+                        throw new Error("Google Maps matrix error");
+                    }
+                }
+                showToast("👑 ดึงข้อมูลเส้นทางสำเร็จ! (ผ่าน Google Maps Premium)");
+            } catch (e) {
+                console.error("CORS Matrix API block catch: ", e);
+                showToast("⚠️ ไม่สามารถรัน Google Maps ในโหมดตรงได้เนื่องจากติด CORS บล็อก แนะนำให้สลับใช้ OSRM (ฟรี) ในหน้าตั้งค่า ⚙️");
+            }
+        }
+
+        // DYNAMIC CUSTOM TRIP CREATION & MANAGEMENT LOGIC
+        function openCreateTripModal() {
+            document.getElementById("createTripModal").classList.remove("hidden");
+            
+            document.getElementById("newTripTitle").value = "";
+            document.getElementById("newTripProvinces").value = "";
+            
+            const stopsContainer = document.getElementById("newStopsContainer");
+            stopsContainer.innerHTML = "";
+            addNewStopRow("กรุงเทพ", "จุดเริ่มต้นที่บ้าน @ดินแดง", 0, "00:00", "04:00", "04:00");
+            addNewStopRow("", "", "", "01:30", "05:30", "06:00");
+
+            const expensesContainer = document.getElementById("newExpensesContainer");
+            expensesContainer.innerHTML = "";
+            addNewExpenseRow("⛽ ค่าน้ำมันเชื้อเพลิง", 1500);
+            addNewExpenseRow("🍛 ค่าอาหารและเครื่องดื่ม", 1000);
+            addNewExpenseRow("🏡 ค่าห้องพักแรม", 1200);
+        }
+
+        function closeCreateTripModal() {
+            document.getElementById("createTripModal").classList.add("hidden");
+        }
+
+        function addNewStopRow(prov = "", place = "", km = "", dur = "01:00", arr = "", dep = "") {
+            const container = document.getElementById("newStopsContainer");
+            const stopRow = document.createElement("div");
+            stopRow.className = "flex items-center gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800 relative group";
+            
+            let provinceOptions = `<option value="">เลือกจังหวัด</option>`;
+            allProvincesList.forEach(p => {
+                const isSelected = (p === prov || (prov === "กรุงเทพ" && p === "กรุงเทพ")) ? 'selected' : '';
+                provinceOptions += `<option value="${escapeHtml(p)}" ${isSelected}>📍 ${escapeHtml(p)}</option>`;
+            });
+
+            const placeEsc = escapeHtml(place);
+            const kmEsc = escapeHtml(km);
+            const depEsc = escapeHtml(dep);
+
+            stopRow.innerHTML = `
+                <div class="flex-1 space-y-2">
+                    <div class="flex gap-2">
+                        <select class="w-1/3 stop-prov bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-100 focus:outline-none focus:border-amber-500">
+                            ${provinceOptions}
+                        </select>
+                        <input type="text" placeholder="ชื่อสถานที่ หรือ จุดพักแวะ" value="${placeEsc}" class="w-2/3 stop-place bg-slate-900 border border-slate-700 text-xs px-2 py-1.5 rounded-lg text-slate-100" required>
+                    </div>
+                    <div class="flex gap-2 items-center text-[10px] text-slate-400">
+                        <span>ระยะทาง:</span>
+                        <input type="number" step="any" placeholder="กิโลเมตร" value="${kmEsc}" class="w-16 stop-km bg-slate-900 border border-slate-700 text-xs px-1 py-0.5 rounded text-slate-100 text-center">
+                        <span>กม. | ออกเดินทาง:</span>
+                        <input type="text" placeholder="เช่น 08:00" value="${depEsc}" class="w-16 stop-dep bg-slate-900 border border-slate-700 text-xs px-1 py-0.5 rounded text-slate-100 text-center">
+                    </div>
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-400 text-lg font-bold px-1.5">&times;</button>
+            `;
+            container.appendChild(stopRow);
+        }
+
+        function addNewExpenseRow(label = "", est = "") {
+            const container = document.getElementById("newExpensesContainer");
+            const row = document.createElement("div");
+            row.className = "flex items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800";
+            
+            const labelEsc = escapeHtml(label);
+            const estEsc = escapeHtml(est);
+
+            row.innerHTML = `
+                <input type="text" placeholder="ชื่อหมวด" value="${labelEsc}" class="flex-1 exp-label bg-slate-900 border border-slate-700 text-xs px-2 py-1 rounded-lg text-slate-100">
+                <div class="relative w-24">
+                    <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400">฿</span>
+                    <input type="number" placeholder="งบ" value="${estEsc}" class="w-full exp-est bg-slate-900 border border-slate-700 text-xs text-right pr-2 pl-4 py-1 rounded-lg text-slate-100">
+                </div>
+                <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-400 text-sm font-bold px-1">&times;</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveAndLaunchTrip() {
+            const titleInput = document.getElementById("newTripTitle").value.trim();
+            const provincesInput = document.getElementById("newTripProvinces").value.trim();
+
+            if (!titleInput) {
+                showToast("❌ กรุณากรอกชื่อทริปของคุณ!");
+                return;
+            }
+
+            const stopRows = document.querySelectorAll("#newStopsContainer > div");
+            const parsedStops = [];
+            const provincesFound = [];
+
+            if (stopRows.length === 0) {
+                showToast("❌ ทริปจะต้องมีแผนจุดแวะอย่างน้อย 1 จุด!");
+                return;
+            }
+
+            // Midnight & sequence time tracking
+            let lastDepVal = "04:00";
+
+            stopRows.forEach((row, index) => {
+                const provVal = row.querySelector(".stop-prov").value.trim() || "ไม่ระบุ";
+                const placeVal = row.querySelector(".stop-place").value.trim() || "จุดแวะปักหมุด";
+                const kmVal = Number(row.querySelector(".stop-km").value) || 0;
+                let depVal = row.querySelector(".stop-dep").value.trim() || "---";
+
+                let calcArr = "---";
+                if (index === 0) {
+                    calcArr = depVal !== "---" ? depVal : "04:00";
+                    if (depVal !== "---") lastDepVal = depVal;
+                } else {
+                    // Fix: If km is 0, inherit the previous stop's departure time as arrival time
+                    if (kmVal === 0) {
+                        calcArr = lastDepVal;
+                        // Keep current tracking
+                        const prevTime = parseTime(lastDepVal);
+                        let nextHour = prevTime.h;
+                        let nextMin = prevTime.m + 45; // default 45 min stay
+                        if (nextMin >= 60) {
+                            nextHour += Math.floor(nextMin / 60);
+                            nextMin = nextMin % 60;
+                        }
+                        depVal = `${String(nextHour % 24).padStart(2, '0')}:${String(nextMin).padStart(2, '0')}`;
+                        lastDepVal = depVal;
+                    } else {
+                        const prevTime = parseTime(lastDepVal);
+                        const hoursNeeded = Math.floor(kmVal / 70);
+                        const minsNeeded = Math.round((kmVal % 70) * 0.85);
+
+                        let arrMin = prevTime.m + minsNeeded;
+                        let arrHr = prevTime.h + hoursNeeded;
+                        let dayOffset = 0;
+                        if (arrMin >= 60) {
+                            arrHr += Math.floor(arrMin / 60);
+                            arrMin = arrMin % 60;
+                        }
+                        if (arrHr >= 24) {
+                            dayOffset = Math.floor(arrHr / 24);
+                            arrHr = arrHr % 24;
+                        }
+
+                        calcArr = formatTime(arrHr, arrMin, dayOffset);
+
+                        let depMin = arrMin + 45; // stay minutes
+                        let depHr = arrHr;
+                        if (depMin >= 60) {
+                            depHr += Math.floor(depMin / 60);
+                            depMin = depMin % 60;
+                        }
+                        if (depHr >= 24) {
+                            dayOffset = Math.floor(depHr / 24);
+                            depHr = depHr % 24;
+                        }
+
+                        depVal = formatTime(depHr, depMin, dayOffset);
+                        lastDepVal = depVal;
+                    }
+                }
+
+                parsedStops.push({
+                    id: index + 1,
+                    prov: provVal,
+                    place: placeVal,
+                    km: kmVal,
+                    dur: index === 0 ? "00:00" : "ประมาณการ",
+                    est_arr: calcArr,
+                    est_dep: depVal,
+                    actual_arr: index === 0 ? depVal : null,
+                    checkIn: index === 0 ? true : false
+                });
+
+                if (provVal && provVal !== "เลือกจังหวัด" && provVal !== "ไม่ระบุ" && !provincesFound.includes(provVal)) {
+                    provincesFound.push(provVal);
+                }
+            });
+
+            const expRows = document.querySelectorAll("#newExpensesContainer > div");
+            const parsedExpenses = [];
+            expRows.forEach(row => {
+                const labelVal = row.querySelector(".exp-label").value.trim() || "ค่าใช้จ่ายทั่วไป";
+                const estVal = Number(row.querySelector(".exp-est").value) || 0;
+
+                parsedExpenses.push({
+                    category: "custom",
+                    label: labelVal,
+                    estimate: estVal,
+                    actual: 0
+                });
+            });
+
+            const parsedProvList = provincesInput 
+                ? provincesInput.split(",").map(p => p.trim()) 
+                : provincesFound;
+
+            const finalProvincesString = parsedProvList.join(" - ");
+            const uniqueTripKey = "custom_" + Date.now();
+
+            const customTripSchema = {
+                title: titleInput,
+                provinces: finalProvincesString,
+                provincesList: parsedProvList,
+                stops: parsedStops,
+                expenses: parsedExpenses
+            };
+
+            const customTrips = JSON.parse(localStorage.getItem('custom_trips_store')) || {};
+            customTrips[uniqueTripKey] = customTripSchema;
+            localStorage.setItem('custom_trips_store', JSON.stringify(customTrips));
+
+            loadTripsDatabase();
+            activeTripKey = uniqueTripKey;
+            activeTripData = JSON.parse(JSON.stringify(allRoadTrips[activeTripKey]));
+
+            customTripSchema.provincesList.forEach(p => {
+                if (!globalVisitedProvinces.includes(p)) {
+                    globalVisitedProvinces.push(p);
+                }
+            });
+
+            populateTripSelector();
+            closeCreateTripModal();
+            saveState();
+            renderApp();
+            calculateTotals();
+            switchTab('timeline');
+
+            showToast("🚀 ทริปใหม่เริ่มทำการเดินทางแล้ว! ขอให้ขับรถปลอดภัยนะครับ");
+        }
+    </script>
+</body>
+</html>
